@@ -1,0 +1,80 @@
+#####################################
+# IntelliJ IDEA
+#####################################
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+#####################################
+# Java
+#####################################
+*.class
+*.log
+*.jar
+*.war
+*.ear
+hs_err_pid*
+replay_pid*
+
+#####################################
+# Maven
+#####################################
+target/
+dependency-reduced-pom.xml
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+#####################################
+# Angular
+#####################################
+node_modules/
+dist/
+.angular/
+.cache/
+coverage/
+.tmp/
+
+#####################################
+# Node / NPM
+#####################################
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+#####################################
+# Environment Files
+#####################################
+.env
+.env.*
+!.env.example
+
+#####################################
+# OS Files
+#####################################
+.DS_Store
+Thumbs.db
+
+#####################################
+# Logs
+#####################################
+logs/
+*.log
+
+#####################################
+# Build Artifacts
+#####################################
+build/
+
+#####################################
+# Test Outputs
+#####################################
+surefire-reports/
+failsafe-reports/
