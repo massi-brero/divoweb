@@ -137,7 +137,7 @@ public class Schauanmeldung extends BaseEntity {
      * Platzierung des Vogels (1–4) oder null wenn nicht platziert.
      * Entspricht Feld "Platz" in Altanwendung.
      */
-    @Min(1) @Max(4)
+    @Min(1) @Max(10)
     @Column(name = "platzierung")
     private Integer platzierung;
 

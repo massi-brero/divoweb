@@ -14,8 +14,9 @@ import java.math.BigDecimal;
  * Aggregiert alle Punkte und Medaillen eines Züchters über alle seine Vögel
  * zu einer Gesamtauswertung. Grundlage für Züchter-Rangliste und Urkunden.
  *
- * Entspricht auch der Medliste.DB die folgende Felder enthielt:
- *   Name, Verbnr, ZStufe, Schausieger, Schaugrs, Gruppens, Gold, Silber, Bronze
+ * Erweiterung gegenüber Original: anzahlKaefige, anzahlPlatz1–7
+ * (aus ZuePlacier.db: AnzKaefig, Anz1–Anz7).
+ * Entspricht auch der Medliste.DB (Schausieger, Schaugrs, Gruppens, Gold, Silber).
  */
 @Entity
 @Table(
@@ -25,9 +26,9 @@ import java.math.BigDecimal;
         columnNames = {"schau_id", "zuecher_id"}
     ),
     indexes = {
-        @Index(name = "idx_zuechpl_schau", columnList = "schau_id"),
+        @Index(name = "idx_zuechpl_schau",   columnList = "schau_id"),
         @Index(name = "idx_zuechpl_zuecher", columnList = "zuecher_id"),
-        @Index(name = "idx_zuechpl_rang", columnList = "schau_id, rang")
+        @Index(name = "idx_zuechpl_rang",    columnList = "schau_id, rang")
     }
 )
 @SequenceGenerator(name = "base_seq", sequenceName = "zuecher_platzierung_seq", allocationSize = 1)
@@ -51,13 +52,13 @@ public class ZuecherPlatzierung extends BaseEntity {
     private Integer rang;
 
     /**
-     * Züchterstufe / Kategorie (z.B. Schausieger-Anwärter, Gruppensieger-Anwärter).
-     * Entspricht ZuechterStufe / ZStufe in der Altanwendung.
+     * Züchterstufe / Kategorie (CH = Championship, N = Nachwuchs, ...).
+     * Entspricht ZuechterStufe / ZueStufe in der Altanwendung.
      */
     @Column(name = "zuecher_stufe")
     private Integer zuecherStufe;
 
-    // Medaillen-Zähler (aus Medliste.DB)
+    // ── Medaillen-Zähler (aus Medliste.DB + ZuePlacier.DB) ──
     @Column(name = "medaillen_gold", nullable = false)
     private int medaillenGold = 0;
 
@@ -67,7 +68,7 @@ public class ZuecherPlatzierung extends BaseEntity {
     @Column(name = "medaillen_bronze", nullable = false)
     private int medaillenBronze = 0;
 
-    // Sondertitel-Flags (aus Medliste.DB: Schausieger, Schaugrs, Gruppens)
+    // ── Sondertitel-Flags (aus Medliste.DB) ──────────────────
     @Column(name = "ist_schausieger", nullable = false)
     private boolean istSchausieger = false;
 
@@ -77,7 +78,7 @@ public class ZuecherPlatzierung extends BaseEntity {
     @Column(name = "ist_gruppensieger", nullable = false)
     private boolean istGruppensieger = false;
 
-    // Gesamtpunkte-Aggregation
+    // ── Gesamtpunkte (aus ZuePlacier.DB: AnzPkt) ────────────
     @Column(name = "punkte_gesamt", precision = 12, scale = 4)
     private BigDecimal punkteGesamt = BigDecimal.ZERO;
 
@@ -89,6 +90,36 @@ public class ZuecherPlatzierung extends BaseEntity {
 
     @Column(name = "anzahl_voegel_platziert", nullable = false)
     private int anzahlVoegelPlatziert = 0;
+
+    /**
+     * Anzahl der angemeldeten Käfige (aus ZuePlacier.DB: AnzKaefig).
+     * NEU gegenüber Original – fehlte in der Repository-Version.
+     */
+    @Column(name = "anzahl_kaefige", nullable = false)
+    private int anzahlKaefige = 0;
+
+    // ── Platzierungsverteilung (aus ZuePlacier.DB: Anz1–Anz7) ──
+    /** Anzahl der mit Platz 1 bewerteten Vögel */
+    @Column(name = "anzahl_platz_1", nullable = false)
+    private int anzahlPlatz1 = 0;
+
+    @Column(name = "anzahl_platz_2", nullable = false)
+    private int anzahlPlatz2 = 0;
+
+    @Column(name = "anzahl_platz_3", nullable = false)
+    private int anzahlPlatz3 = 0;
+
+    @Column(name = "anzahl_platz_4", nullable = false)
+    private int anzahlPlatz4 = 0;
+
+    @Column(name = "anzahl_platz_5", nullable = false)
+    private int anzahlPlatz5 = 0;
+
+    @Column(name = "anzahl_platz_6", nullable = false)
+    private int anzahlPlatz6 = 0;
+
+    @Column(name = "anzahl_platz_7", nullable = false)
+    private int anzahlPlatz7 = 0;
 
     /** Gesamtzahl aller Medaillen */
     @Transient

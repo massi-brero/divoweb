@@ -18,20 +18,23 @@ import java.util.List;
  * (NName, VName, Strasse, Land, Wohnort). Hier normalisiert als eigene Entität.
  *
  * Felder aus Altanwendung:
- *   ZuechterNr → verbandsnummer
- *   NName      → nachname
- *   VName      → vorname
- *   Strasse    → strasse
- *   Wohnort    → wohnort
- *   Land       → land
- *   Sparte     → verband
+ *   ZuechterNr  → verbandsnummer    (Primärschlüssel der Migration)
+ *   NName       → nachname
+ *   VName       → vorname
+ *   Strasse     → strasse
+ *   Plz         → plz               (NEU – fehlte im Original)
+ *   Wohnort     → wohnort
+ *   Land        → land
+ *   Telefon     → telefon           (NEU – fehlte im Original)
+ *   Sparte      → verband
+ *   Katalog     → katalogEinverstaendnis
  */
 @Entity
 @Table(
     name = "zuecher",
     indexes = {
         @Index(name = "idx_zuecher_verbandsnummer", columnList = "verbandsnummer"),
-        @Index(name = "idx_zuecher_nachname", columnList = "nachname")
+        @Index(name = "idx_zuecher_nachname",       columnList = "nachname")
     }
 )
 @SequenceGenerator(name = "base_seq", sequenceName = "zuecher_seq", allocationSize = 1)
@@ -41,9 +44,8 @@ import java.util.List;
 public class Zuecher extends BaseEntity {
 
     /**
-     * Verbandsmitgliedsnummer (z.B. "13861").
+     * Verbandsmitgliedsnummer (z.B. "10294").
      * Entspricht ZuechterNr in Altanwendung.
-     * Nicht eindeutig über Verbände hinweg – Kombination mit verband ist eindeutig.
      */
     @NotBlank
     @Size(max = 20)
@@ -51,12 +53,12 @@ public class Zuecher extends BaseEntity {
     private String verbandsnummer;
 
     /**
-     * Züchterverband (DWV, AZ, AGZ, ...).
+     * Züchterverband (DWV, AZ, OWV, KCHA, ...).
      * Entspricht Feld "Sparte" in Altanwendung.
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "verband", nullable = false, length = 20)
-    private Verband verband;
+    private Verband verband = Verband.DWV;
 
     @NotBlank
     @Size(max = 100)
@@ -71,22 +73,37 @@ public class Zuecher extends BaseEntity {
     @Column(name = "strasse", length = 200)
     private String strasse;
 
+    /**
+     * Postleitzahl (neu gegenüber Altanwendung, war in Schaudaten-Tabellen vorhanden
+     * aber nicht normalisiert im Adressbuch).
+     */
+    @Size(max = 15)
+    @Column(name = "plz", length = 15)
+    private String plz;
+
     @Size(max = 100)
     @Column(name = "wohnort", length = 100)
     private String wohnort;
 
     /**
-     * Länderkennzeichen (D, CH, F, B, NL, A, ...).
-     * Entspricht Feld "Land" in Altanwendung.
+     * Länderkennzeichen (D, CH, F, ...) oder Vollname (Deutschland, Frankreich, ...).
+     * Entspricht Feld "Land" in Schaudaten / "Nation" in Adressen.
      */
-    @Size(max = 10)
-    @Column(name = "land", length = 10)
+    @Size(max = 50)
+    @Column(name = "land", length = 50)
     private String land;
 
     /**
+     * Telefonnummer (neu gegenüber Altanwendung – war im Adressbuch vorhanden,
+     * aber nie in die Züchter-Entität migriert worden).
+     */
+    @Size(max = 30)
+    @Column(name = "telefon", length = 30)
+    private String telefon;
+
+    /**
      * Einverständnis zur Katalogaufnahme (DSGVO).
-     * Entspricht Feld "Katalog" in Altanwendung (als Flag in Schaudaten).
-     * Hier auf Züchter-Ebene verwaltet.
+     * Entspricht Feld "Katalog" in Altanwendung.
      */
     @Column(name = "katalog_einverstaendnis", nullable = false)
     private boolean katalogEinverstaendnis = false;
