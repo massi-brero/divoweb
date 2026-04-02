@@ -1,11 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog
-    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
 
-    <include file="db/changelog/changes/v1-initial-schema.xml"
-             relativeToChangelogFile="false"/>
+    <include file="changes/v1-initial-schema.xml"
+             relativeToChangelogFile="true"/>
+
+    <include file="changes/V002__import_vogelklassen.sql"
+             relativeToChangelogFile="true"/>
+    <include file="changes/V003__import_zuecher.sql"
+             relativeToChangelogFile="true"/>
+    <include file="changes/V004__import_schauen.sql"
+             relativeToChangelogFile="true"/>
+    <include file="changes/V005__import_schauanmeldungen.sql"
+             relativeToChangelogFile="true"/>
+    <include file="changes/V006__import_standgeld.sql"
+             relativeToChangelogFile="true"/>
+    <include file="changes/V007__import_zuecher_platzierungen.sql"
+             relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

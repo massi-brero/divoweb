@@ -45,9 +45,14 @@
             </column>
             <column name="vorname" type="VARCHAR(100)"/>
             <column name="strasse" type="VARCHAR(200)"/>
+            <!-- plz: in Schaudaten vorhanden, fehlte in Altanwendung-Adressbuch -->
+            <column name="plz" type="VARCHAR(15)"/>
             <column name="wohnort" type="VARCHAR(100)"/>
-            <column name="land" type="VARCHAR(10)"
-                    remarks="Länderkennzeichen: D, CH, F, B, NL, A, ..."/>
+            <!-- land: VARCHAR(50) – Werte wie "Deutschland", "Frankreich" passen nicht in VARCHAR(10) -->
+            <column name="land" type="VARCHAR(50)"
+                    remarks="Länderkennzeichen oder Vollname: D, CH, Deutschland, Frankreich, ..."/>
+            <!-- telefon: in Adressen.DB vorhanden, fehlte im ursprünglichen Entity-Design -->
+            <column name="telefon" type="VARCHAR(30)"/>
             <column name="katalog_einverstaendnis" type="BOOLEAN" defaultValueBoolean="false"
                     remarks="DSGVO: Einverständnis zur Katalogveröffentlichung">
                 <constraints nullable="false"/>
@@ -64,8 +69,18 @@
                 columnNames="verbandsnummer, verband"
                 constraintName="uq_zuecher_verbandsnummer_verband"/>
 
+        <!-- Alle Verbände aus Altdaten: DWV, AZ, AGZ, DSV (deutschsprachig),
+             OWV/OKB/SWV/KCHA/ZEWA (Österreich/Schweiz),
+             AEZ/AEV/AFZ/AFO/EF/FU/SLO (international),
+             WSC/DKB (Spezialclubs), SONSTIGE (Fallback) -->
         <sql>ALTER TABLE zuecher ADD CONSTRAINT chk_zuecher_verband
-            CHECK (verband IN ('DWV','AZ','AGZ','AEZ','AEV','AFZ','WSC','DKB','INTERNATIONAL'))</sql>
+            CHECK (verband IN (
+            'DWV','AZ','AGZ','DSV',
+            'OWV','OKB','SWV','KCHA','ZEWA',
+            'AEZ','AEV','AFZ','AFO','EF','FU','SLO',
+            'WSC','DKB',
+            'SONSTIGE'
+            ))</sql>
 
         <createIndex tableName="zuecher" indexName="idx_zuecher_verbandsnummer">
             <column name="verbandsnummer"/>
@@ -91,9 +106,11 @@
                     remarks="1. Teil Klassenschlüssel – Hauptklasse/Vogelart (Feld Skl1 in Altanwendung)">
                 <constraints nullable="false"/>
             </column>
-            <column name="skl2" type="VARCHAR(20)"
+            <!-- skl2/skl3: Default '' damit Unique-Constraint mit Import-Daten harmoniert
+                 (Imports schreiben leere Strings statt NULL für fehlende Schlüsselteile) -->
+            <column name="skl2" type="VARCHAR(20)" defaultValue=""
                     remarks="2. Teil Klassenschlüssel – Farbengruppe (Feld Skl2 in Altanwendung)"/>
-            <column name="skl3" type="VARCHAR(20)"
+            <column name="skl3" type="VARCHAR(20)" defaultValue=""
                     remarks="3. Teil Klassenschlüssel – Farbvariante (Feld Skl3 in Altanwendung)"/>
             <column name="farbe1" type="VARCHAR(150)"
                     remarks="Primäre Farbbezeichnung (Feld Farbe1 in Altanwendung)">
@@ -272,8 +289,9 @@
                     remarks="false = NE (nicht eingeliefert) in Altanwendung">
                 <constraints nullable="false"/>
             </column>
+            <!-- platzierung: BETWEEN 1 AND 10 – Altdaten enthalten Platzierungen bis 7 -->
             <column name="platzierung" type="INTEGER"
-                    remarks="Platz 1–4 oder NULL wenn nicht platziert"/>
+                    remarks="Platz 1–7 aus Altdaten (bis Platz 10 reserviert), NULL wenn nicht platziert"/>
             <column name="platzierungskennzeichen" type="VARCHAR(20)" defaultValue="NORMAL"
                     remarks="FkNe in Altanwendung: NORMAL / NICHT_EINGELIEFERT / FALSCHE_KLASSE">
                 <constraints nullable="false"/>
@@ -286,28 +304,17 @@
                     remarks="AnZue in Altanwendung (berechnet)"/>
             <column name="klasse_zusatzbezeichnung" type="VARCHAR(200)"
                     remarks="ZusBez in Altanwendung – für konsolidierte Klassen"/>
-            <column name="punkte_platz" type="DECIMAL(10,4)"
-                    remarks="PktPl in Altanwendung"/>
-            <column name="punkte_schausieger_gegner" type="DECIMAL(10,4)"
-                    remarks="PktSchausGg in Altanwendung"/>
-            <column name="punkte_schaugruppe" type="DECIMAL(10,4)"
-                    remarks="PktSchaGr in Altanwendung"/>
-            <column name="punkte_schaugruppe_gegner" type="DECIMAL(10,4)"
-                    remarks="PktSchauGrGg in Altanwendung"/>
-            <column name="punkte_gruppensieger" type="DECIMAL(10,4)"
-                    remarks="PktGruS in Altanwendung"/>
-            <column name="punkte_gruppensieger_gegner" type="DECIMAL(10,4)"
-                    remarks="PktGrusGg in Altanwendung"/>
-            <column name="punkte_schwerpunktfarbe" type="DECIMAL(10,4)"
-                    remarks="PktSchwF in Altanwendung"/>
-            <column name="punkte_schwerpunktfarbe_gegner" type="DECIMAL(10,4)"
-                    remarks="PktSchwFGg in Altanwendung"/>
-            <column name="punkte_gesamt" type="DECIMAL(10,4)"
-                    remarks="PktGes in Altanwendung – Summe aller Punkte"/>
-            <column name="heller_gruppe" type="VARCHAR(20)"
-                    remarks="Hellgr in Altanwendung"/>
-            <column name="ch_standard" type="VARCHAR(20)"
-                    remarks="CHSt in Altanwendung"/>
+            <column name="punkte_platz"                    type="DECIMAL(10,4)" remarks="PktPl in Altanwendung"/>
+            <column name="punkte_schausieger_gegner"       type="DECIMAL(10,4)" remarks="PktSchausGg in Altanwendung"/>
+            <column name="punkte_schaugruppe"              type="DECIMAL(10,4)" remarks="PktSchaGr in Altanwendung"/>
+            <column name="punkte_schaugruppe_gegner"       type="DECIMAL(10,4)" remarks="PktSchauGrGg in Altanwendung"/>
+            <column name="punkte_gruppensieger"            type="DECIMAL(10,4)" remarks="PktGruS in Altanwendung"/>
+            <column name="punkte_gruppensieger_gegner"     type="DECIMAL(10,4)" remarks="PktGrusGg in Altanwendung"/>
+            <column name="punkte_schwerpunktfarbe"         type="DECIMAL(10,4)" remarks="PktSchwF in Altanwendung"/>
+            <column name="punkte_schwerpunktfarbe_gegner"  type="DECIMAL(10,4)" remarks="PktSchwFGg in Altanwendung"/>
+            <column name="punkte_gesamt"                   type="DECIMAL(10,4)" remarks="PktGes in Altanwendung – Summe aller Punkte"/>
+            <column name="heller_gruppe" type="VARCHAR(20)" remarks="Hellgr in Altanwendung"/>
+            <column name="ch_standard"   type="VARCHAR(20)" remarks="CHSt in Altanwendung"/>
             <column name="erstellt_am" type="TIMESTAMP" defaultValueComputed="NOW()">
                 <constraints nullable="false"/>
             </column>
@@ -323,8 +330,9 @@
         <sql>ALTER TABLE schauanmeldung ADD CONSTRAINT chk_anmeldung_geschlecht
             CHECK (geschlecht IN ('MAENNLICH','WEIBLICH','UNBEKANNT'))</sql>
 
+        <!-- platzierung: bis 10 (Altdaten haben Werte bis 7) -->
         <sql>ALTER TABLE schauanmeldung ADD CONSTRAINT chk_anmeldung_platzierung
-            CHECK (platzierung IS NULL OR platzierung BETWEEN 1 AND 4)</sql>
+            CHECK (platzierung IS NULL OR platzierung BETWEEN 1 AND 10)</sql>
 
         <sql>ALTER TABLE schauanmeldung ADD CONSTRAINT chk_anmeldung_platzierungskennzeichen
             CHECK (platzierungskennzeichen IN ('NORMAL','NICHT_EINGELIEFERT','FALSCHE_KLASSE'))</sql>
@@ -505,6 +513,34 @@
             <column name="anzahl_voegel_platziert" type="INTEGER" defaultValueNumeric="0">
                 <constraints nullable="false"/>
             </column>
+            <!-- Felder aus ZuePlacier.DB: AnzKaefig + Anz1–Anz7 -->
+            <column name="anzahl_kaefige" type="INTEGER" defaultValueNumeric="0"
+                    remarks="AnzKaefig in Altanwendung – Gesamtanzahl angemeldeter Käfige">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_1" type="INTEGER" defaultValueNumeric="0"
+                    remarks="Anz1 in Altanwendung – Anzahl Vögel mit Platz 1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_2" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_3" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_4" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_5" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_6" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_7" type="INTEGER" defaultValueNumeric="0"
+                    remarks="Anz7 in Altanwendung – Anzahl Vögel mit Platz 7">
+                <constraints nullable="false"/>
+            </column>
             <column name="erstellt_am" type="TIMESTAMP" defaultValueComputed="NOW()">
                 <constraints nullable="false"/>
             </column>
@@ -538,31 +574,31 @@
                     remarks="Schaukatalog-View – Basis für Katalog-Druckausgabe"
                     replaceIfExists="true">
             SELECT
-                s.id AS schau_id,
-                s.schautyp,
-                s.jahr,
-                s.ort,
-                sa.kaefig_nummer,
-                vk.skl1, vk.skl2, vk.skl3,
-                vk.farbe1, vk.farbe2,
-                sa.geschlecht,
-                sa.ring_nummer,
-                sa.zuchtjahr,
-                z.nachname AS zuecher_nachname,
-                z.vorname AS zuecher_vorname,
-                z.verbandsnummer,
-                z.verband,
-                z.wohnort,
-                z.land,
-                z.katalog_einverstaendnis,
-                sa.platzierung,
-                sa.medaille,
-                sa.platzierungskennzeichen,
-                sa.punkte_gesamt
+            s.id AS schau_id,
+            s.schautyp,
+            s.jahr,
+            s.ort,
+            sa.kaefig_nummer,
+            vk.skl1, vk.skl2, vk.skl3,
+            vk.farbe1, vk.farbe2,
+            sa.geschlecht,
+            sa.ring_nummer,
+            sa.zuchtjahr,
+            z.nachname AS zuecher_nachname,
+            z.vorname  AS zuecher_vorname,
+            z.verbandsnummer,
+            z.verband,
+            z.wohnort,
+            z.land,
+            z.katalog_einverstaendnis,
+            sa.platzierung,
+            sa.medaille,
+            sa.platzierungskennzeichen,
+            sa.punkte_gesamt
             FROM schauanmeldung sa
-                     JOIN schau s ON s.id = sa.schau_id
-                     JOIN zuecher z ON z.id = sa.zuecher_id
-                     JOIN vogelklasse vk ON vk.id = sa.vogelklasse_id
+            JOIN schau       s  ON s.id  = sa.schau_id
+            JOIN zuecher     z  ON z.id  = sa.zuecher_id
+            JOIN vogelklasse vk ON vk.id = sa.vogelklasse_id
             ORDER BY vk.skl1, vk.skl2, vk.skl3, sa.kaefig_nummer
         </createView>
 
@@ -570,25 +606,25 @@
                     remarks="Medaillenauswertung – Basis für Urkunden und Medaillenliste"
                     replaceIfExists="true">
             SELECT
-                zp.schau_id,
-                s.schautyp,
-                s.jahr,
-                z.nachname,
-                z.vorname,
-                z.verbandsnummer,
-                z.verband,
-                zp.rang,
-                zp.medaillen_gold,
-                zp.medaillen_silber,
-                zp.medaillen_bronze,
-                zp.medaillen_gold + zp.medaillen_silber + zp.medaillen_bronze AS medaillen_gesamt,
-                zp.punkte_gesamt,
-                zp.ist_schausieger,
-                zp.ist_schaugruppensieger,
-                zp.ist_gruppensieger
+            zp.schau_id,
+            s.schautyp,
+            s.jahr,
+            z.nachname,
+            z.vorname,
+            z.verbandsnummer,
+            z.verband,
+            zp.rang,
+            zp.medaillen_gold,
+            zp.medaillen_silber,
+            zp.medaillen_bronze,
+            zp.medaillen_gold + zp.medaillen_silber + zp.medaillen_bronze AS medaillen_gesamt,
+            zp.punkte_gesamt,
+            zp.ist_schausieger,
+            zp.ist_schaugruppensieger,
+            zp.ist_gruppensieger
             FROM zuecher_platzierung zp
-                     JOIN schau s ON s.id = zp.schau_id
-                     JOIN zuecher z ON z.id = zp.zuecher_id
+            JOIN schau   s ON s.id = zp.schau_id
+            JOIN zuecher z ON z.id = zp.zuecher_id
             ORDER BY zp.schau_id, zp.rang NULLS LAST, zp.punkte_gesamt DESC
         </createView>
 
@@ -596,23 +632,24 @@
                     remarks="Standgeld-Abrechnung – entspricht Standgeld-Druckfunktion der Altanwendung"
                     replaceIfExists="true">
             SELECT
-                sg.schau_id,
-                s.schautyp,
-                s.jahr,
-                s.ort,
-                z.nachname,
-                z.vorname,
-                z.verbandsnummer,
-                sg.anzahl_gemeldet,
-                sg.anzahl_eingeliefert,
-                sg.standgeld_pro_vogel,
-                sg.gesamtbetrag,
-                sg.bezahlt
+            sg.schau_id,
+            s.schautyp,
+            s.jahr,
+            s.ort,
+            z.nachname,
+            z.vorname,
+            z.verbandsnummer,
+            sg.anzahl_gemeldet,
+            sg.anzahl_eingeliefert,
+            sg.standgeld_pro_vogel,
+            sg.gesamtbetrag,
+            sg.bezahlt
             FROM standgeld sg
-                     JOIN schau s ON s.id = sg.schau_id
-                     JOIN zuecher z ON z.id = sg.zuecher_id
+            JOIN schau   s ON s.id = sg.schau_id
+            JOIN zuecher z ON z.id = sg.zuecher_id
             ORDER BY sg.schau_id, z.nachname, z.vorname
         </createView>
+
     </changeSet>
 
 </databaseChangeLog>
