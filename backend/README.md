@@ -107,6 +107,10 @@ src/main/java/de/divowin/schauverwaltung/
 │   └── SecurityConfig.java           # Spring Security
 ├── controller/
 │   └── SchauverwaltungController.java # REST-Endpunkte (alle Controller)
+├── dto/
+│   ├── RichterDTO.java               # DTO für Richter (Teil von SchauDTO)
+│   ├── SchauDTO.java                 # DTO für Schau-Rückgaben
+│   └── StandgeldDTO.java             # DTO für Standgeld-Rückgaben
 ├── entity/
 │   ├── BaseEntity.java               # Audit-Basisklasse
 │   ├── Zuecher.java                  # ← Adressen.DB
@@ -132,16 +136,40 @@ src/main/java/de/divowin/schauverwaltung/
 │   ├── StandgeldRepository.java
 │   └── ZuecherPlatzierungRepository.java
 └── service/
-    ├── SchauService.java
+    ├── SchauService.java             # gibt SchauDTO / List<SchauDTO> zurück
     ├── MedaillenService.java         # Medaillen-Berechnungslogik
-    └── StandgeldService.java         # Standgeld-Berechnungslogik
+    └── StandgeldService.java         # gibt StandgeldDTO / List<StandgeldDTO> zurück
 
-src/main/resources/
-├── application.properties
-├── application-dev.properties
-└── db/migration/
-    └── V1__Initial_Schema.sql        # Flyway-Schema (alle Tabellen + Views)
+src/test/java/de/divowin/schauverwaltung/
+├── SchauverwaltungApplicationTests.java  # Kontexttest
+└── service/
+    ├── SchauServiceTest.java             # Unit-Tests SchauService
+    └── StandgeldServiceTest.java         # Unit-Tests StandgeldService
 ```
+
+---
+
+## Schichtenarchitektur
+
+```
+Controller  →  Service  →  Repository  →  Datenbank
+               ↓
+              DTO
+```
+
+Services geben ausschließlich DTOs zurück – JPA-Entitäten verlassen die Service-Schicht nicht. Controller, die keine eigene Service-Schicht besitzen (Züchter, Anmeldungen, Sieger), arbeiten noch direkt auf den Repositories und liefern die Entitäten als JSON-Response.
+
+### DTOs
+
+Alle DTOs sind als **Java Records** implementiert und damit unveränderlich.
+
+| DTO | Service | Felder |
+|---|---|---|
+| `SchauDTO` | `SchauService` | id, schautyp, jahr, ort, verband, standgeldProVogel, status, notizen, bezeichnung, richter |
+| `RichterDTO` | Teil von `SchauDTO` | id, position, nachname, vorname, vollname |
+| `StandgeldDTO` | `StandgeldService` | id, schauId, zuecherId, zuecherNachname, zuecherVorname, anzahlGemeldet, anzahlEingeliefert, standgeldProVogel, gesamtbetrag, bezahlt |
+
+> **Hinweis:** Listenabfragen (`alleSchauen`, `schauenNachJahr`) liefern `SchauDTO` mit einer leeren Richter-Liste. Die Richter werden nur beim Einzelabruf (`schauById`) per JOIN FETCH geladen und vollständig gemappt.
 
 ---
 
@@ -165,7 +193,6 @@ NE (nicht eingeliefert) und FK (falsche Klasse) werden nicht gezählt.
 ## TODO / Offene Punkte
 
 - [ ] JWT-Authentifizierung implementieren
-- [ ] Datenmigration aus Paradox-Dateien (Python-Migrationsskript)
 - [ ] PDF-Generierung (Käfigaufkleber, Bewertungslisten, Katalog, Urkunden)
 - [ ] HTML-Export Siegerliste (entspricht `Siegerliste_Internet.exe`)
 - [ ] Klassen-Konsolidierungslogik (Dunkelfarben-Regelung AZ-DWV)
