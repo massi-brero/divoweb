@@ -1,5 +1,7 @@
 package de.divowin.schauverwaltung.controller;
 
+import de.divowin.schauverwaltung.dto.SchauDTO;
+import de.divowin.schauverwaltung.dto.StandgeldDTO;
 import de.divowin.schauverwaltung.entity.*;
 import de.divowin.schauverwaltung.repository.*;
 import de.divowin.schauverwaltung.service.*;
@@ -26,33 +28,33 @@ class SchauController {
 
     @GetMapping
     @Operation(summary = "Alle Schauen abrufen")
-    public List<Schau> alleSchauen() {
+    public List<SchauDTO> alleSchauen() {
         return schauService.alleSchauen();
     }
 
     @GetMapping("/jahr/{jahr}")
     @Operation(summary = "Schauen nach Jahrgang")
-    public List<Schau> schauenNachJahr(@PathVariable int jahr) {
+    public List<SchauDTO> schauenNachJahr(@PathVariable int jahr) {
         return schauService.schauenNachJahr(jahr);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Einzelne Schau mit Richtern")
-    public Schau schauById(@PathVariable Long id) {
+    public SchauDTO schauById(@PathVariable Long id) {
         return schauService.schauById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Neue Schau anlegen")
-    public Schau schauAnlegen(@Valid @RequestBody Schau schau) {
+    public SchauDTO schauAnlegen(@Valid @RequestBody Schau schau) {
         return schauService.schauAnlegen(schau);
     }
 
     @PatchMapping("/{id}/status/{status}")
     @Operation(summary = "Schaustatus ändern")
-    public Schau statusAendern(@PathVariable Long id,
-                                @PathVariable Schau.Schaustatus status) {
+    public SchauDTO statusAendern(@PathVariable Long id,
+                                   @PathVariable Schau.Schaustatus status) {
         return schauService.statusAendern(id, status);
     }
 }
@@ -77,8 +79,8 @@ class ZuecherController {
     @GetMapping("/{id}")
     public ResponseEntity<Zuecher> byId(@PathVariable Long id) {
         return zuecherRepository.findById(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/suche")
@@ -134,8 +136,8 @@ class SchauanmeldungController {
     public ResponseEntity<Schauanmeldung> byKaefigNummer(
             @PathVariable Long schauId, @PathVariable Integer kaefigNummer) {
         return anmeldungRepository.findBySchauIdAndKaefigNummer(schauId, kaefigNummer)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -153,11 +155,11 @@ class SchauanmeldungController {
             @PathVariable Integer kaefigNummer,
             @PathVariable Integer platz) {
         return anmeldungRepository.findBySchauIdAndKaefigNummer(schauId, kaefigNummer)
-            .map(sa -> {
-                sa.setPlatzierung(platz);
-                return ResponseEntity.ok(anmeldungRepository.save(sa));
-            })
-            .orElse(ResponseEntity.notFound().build());
+                .map(sa -> {
+                    sa.setPlatzierung(platz);
+                    return ResponseEntity.ok(anmeldungRepository.save(sa));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }
 
@@ -171,17 +173,16 @@ class SchauanmeldungController {
 class StandgeldController {
 
     private final StandgeldService standgeldService;
-    private final StandgeldRepository standgeldRepository;
 
     @GetMapping
     @Operation(summary = "Standgeld-Übersicht für Schau")
-    public List<Standgeld> uebersicht(@PathVariable Long schauId) {
-        return standgeldRepository.findBySchauIdOrderByZuecherNachnameAsc(schauId);
+    public List<StandgeldDTO> uebersicht(@PathVariable Long schauId) {
+        return standgeldService.uebersichtFuerSchau(schauId);
     }
 
     @PostMapping("/berechnen")
     @Operation(summary = "Standgeld neu berechnen")
-    public List<Standgeld> berechnen(@PathVariable Long schauId) {
+    public List<StandgeldDTO> berechnen(@PathVariable Long schauId) {
         return standgeldService.berechneStandgeldFuerSchau(schauId);
     }
 }
