@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DivoWeb – Schau anlegen</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__inner">
+        <div class="brand">
+          <img
+            class="brand__logo"
+            src="./vogel.png"
+            alt="Wellensittich Logo"
+            onerror="this.style.display = 'none'"
+          />
+          <div class="brand__text">
+            <span class="brand__divo">Divo</span
+            ><span class="brand__web">Web</span>
+          </div>
+        </div>
+
+        <nav class="main-nav" aria-label="Hauptnavigation">
+          <button class="nav-link is-active" type="button">
+            Schau anlegen
+          </button>
+          <button class="nav-link" type="button">Vor der Schau</button>
+          <button class="nav-link" type="button">Showtime</button>
+          <button class="nav-link" type="button">Nach der Schau</button>
+        </nav>
+      </div>
+      <div class="topbar__accent"></div>
+    </header>
+
+    <main class="page">
+      <section class="page-section">
+        <h1 class="page-title">Schau anlegen</h1>
+
+        <form id="showForm" class="panel" novalidate>
+          <div class="panel__grid">
+            <section class="panel-column">
+              <h2 class="section-title">Schaudaten</h2>
+
+              <div class="form-group">
+                <label for="showNumber"
+                  >Nummer der Schau <span class="required">*</span></label
+                >
+                <input id="showNumber" name="showNumber" type="text" />
+                <p class="field-error" data-error-for="showNumber"></p>
+              </div>
+
+              <div class="form-group">
+                <label for="showType"
+                  >Art der Schau <span class="required">*</span></label
+                >
+                <select id="showType" name="showType">
+                  <option value="">Bitte wählen...</option>
+                  <option value="Landesschau">Landesschau</option>
+                  <option value="Bundesschau">Bundesschau</option>
+                  <option value="Vereinsschau">Vereinsschau</option>
+                  <option value="Europaschau">Europaschau</option>
+                </select>
+                <p class="field-error" data-error-for="showType"></p>
+              </div>
+
+              <div class="form-group">
+                <label for="showYear"
+                  >Jahr der Schau <span class="required">*</span></label
+                >
+                <select id="showYear" name="showYear">
+                  <option value="">Bitte wählen...</option>
+                </select>
+                <p class="field-error" data-error-for="showYear"></p>
+              </div>
+
+              <div class="form-group">
+                <label for="showLocation"
+                  >Ort der Schau <span class="required">*</span></label
+                >
+                <input id="showLocation" name="showLocation" type="text" />
+                <p class="field-error" data-error-for="showLocation"></p>
+              </div>
+
+              <div class="form-group">
+                <label for="association"
+                  >Verband / Sparte <span class="required">*</span></label
+                >
+                <select id="association" name="association">
+                  <option value="">Bitte wählen...</option>
+                  <option value="AZ">AZ</option>
+                  <option value="DKB">DKB</option>
+                  <option value="AGZ">AGZ</option>
+                  <option value="DWV">DWV</option>
+                </select>
+                <p class="field-error" data-error-for="association"></p>
+              </div>
+
+              <div class="form-group">
+                <label for="feePerBird"
+                  >Standgeld pro Vogel <span class="required">*</span></label
+                >
+                <div class="input-suffix">
+                  <input
+                    id="feePerBird"
+                    name="feePerBird"
+                    type="text"
+                    inputmode="decimal"
+                  />
+                  <span class="input-suffix__text">EUR</span>
+                </div>
+                <p class="field-error" data-error-for="feePerBird"></p>
+              </div>
+            </section>
+
+            <section class="panel-column">
+              <div class="section-title-row">
+                <div class="section-title">Preisrichter / Zuchtrichter</div>
+                <div class="section-divider"></div>
+              </div>
+
+              <div id="judgesList" class="judges-list" aria-live="polite"></div>
+
+              <button
+                id="addJudgeButton"
+                class="add-judge-button"
+                type="button"
+              >
+                <span class="plus">＋</span>
+                Preisrichter hinzufügen
+              </button>
+            </section>
+          </div>
+
+          <div class="panel__footer">
+            <button class="btn btn--primary" type="submit">
+              Schau speichern
+            </button>
+            <button
+              id="startManagementButton"
+              class="btn btn--secondary"
+              type="button"
+            >
+              Schauverwaltung starten
+            </button>
+            <button id="cancelButton" class="btn btn--secondary" type="button">
+              Abbrechen
+            </button>
+            <button
+              id="sampleDataButton"
+              class="btn btn--tertiary"
+              type="button"
+            >
+              Beispieldaten einfügen
+            </button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <template id="judgeRowTemplate">
+      <article class="judge-card">
+        <div class="judge-card__grid">
+          <div class="form-group form-group--compact">
+            <label>Name</label>
+            <input type="text" data-judge-field="name" />
+          </div>
+
+          <div class="form-group form-group--compact">
+            <label>Sparte / Verband</label>
+            <select data-judge-field="association">
+              <option value="">Bitte wählen...</option>
+              <option value="AZ">AZ</option>
+              <option value="DKB">DKB</option>
+              <option value="AGZ">AGZ</option>
+              <option value="DWV">DWV</option>
+            </select>
+          </div>
+
+          <div class="judge-card__actions">
+            <button
+              class="delete-judge-button"
+              type="button"
+              title="Preisrichter entfernen"
+              aria-label="Preisrichter entfernen"
+            >
+              −
+            </button>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
