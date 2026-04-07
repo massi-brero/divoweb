@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DivoWeb – Startseite</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="home-body">
+    <header class="topbar">
+      <div class="topbar__inner">
+        <div class="brand">
+          <img
+            class="brand__logo"
+            src="./assets/images/vogel.png"
+            alt="Wellensittich Logo"
+            onerror="this.style.display = 'none'"
+          />
+          <div class="brand__text">
+            <span class="brand__divo">Divo</span
+            ><span class="brand__web">Web</span>
+          </div>
+        </div>
+
+        <nav class="main-nav" aria-label="Hauptnavigation">
+          <a class="nav-link" href="./schau-anlegen.html">Schau anlegen</a>
+          <a class="nav-link" href="#">Vor der Schau</a>
+          <a class="nav-link" href="#">Showtime</a>
+          <a class="nav-link" href="#">Nach der Schau</a>
+        </nav>
+      </div>
+      <div class="topbar__accent"></div>
+    </header>
+
+    <main class="home-page">
+      <section class="home-hero">
+        <div class="home-hero__content">
+          <p class="home-eyebrow">Schauverwaltung für Wellensittiche</p>
+          <h1 class="home-title">Willkommen bei DivoWeb</h1>
+          <p class="home-subtitle">
+            Wählen Sie einen Bereich, um die Schau anzulegen, vorzubereiten,
+            während der Bewertung zu begleiten oder nach der Schau Auswertungen
+            zu erstellen.
+          </p>
+
+          <div class="home-actions" aria-label="Hauptbereiche">
+            <a
+              class="home-action home-action--primary"
+              href="./schau-anlegen.html"
+            >
+              Schau anlegen
+            </a>
+            <a class="home-action" href="#">Vor der Schau</a>
+            <a class="home-action" href="#">Showtime</a>
+            <a class="home-action" href="#">Nach der Schau</a>
+          </div>
+        </div>
+
+        <div class="home-outline" aria-hidden="true">
+          <img src="./vogel.png" alt="" />
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
