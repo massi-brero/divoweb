@@ -1,16 +1,13 @@
 package de.divowin.schauverwaltung.controller;
 
-import de.divowin.schauverwaltung.dto.SchauDTO;
-import de.divowin.schauverwaltung.dto.StandgeldDTO;
-import de.divowin.schauverwaltung.entity.*;
-import de.divowin.schauverwaltung.repository.*;
+import de.divowin.schauverwaltung.dto.*;
+import de.divowin.schauverwaltung.entity.Schau;
 import de.divowin.schauverwaltung.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -47,8 +44,8 @@ class SchauController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Neue Schau anlegen")
-    public SchauDTO schauAnlegen(@Valid @RequestBody Schau schau) {
-        return schauService.schauAnlegen(schau);
+    public SchauDTO schauAnlegen(@Valid @RequestBody SchauRequestDTO dto) {
+        return schauService.schauAnlegen(dto);
     }
 
     @PatchMapping("/{id}/status/{status}")
@@ -64,41 +61,42 @@ class SchauController {
 // ============================================================
 @RestController
 @RequestMapping("/v1/zuecher")
-@Tag(name = "Züchter", description = "Züchter-/Ausstellerverwaltung (Adressen.DB)")
+@Tag(name = "Züchter", description = "Züchter-/Ausstellerverwaltung")
 @RequiredArgsConstructor
 class ZuecherController {
 
-    private final ZuecherRepository zuecherRepository;
+    private final ZuecherService zuecherService;
 
     @GetMapping
     @Operation(summary = "Alle Züchter abrufen")
-    public List<Zuecher> alle() {
-        return zuecherRepository.findAll();
+    public List<ZuecherResponseDTO> alle() {
+        return zuecherService.alleZuecher();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Zuecher> byId(@PathVariable Long id) {
-        return zuecherRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @Operation(summary = "Einzelnen Züchter abrufen")
+    public ZuecherResponseDTO byId(@PathVariable Long id) {
+        return zuecherService.zuecherById(id);      // 404 via GlobalExceptionHandler
     }
 
     @GetMapping("/suche")
-    @Operation(summary = "Züchter nach Name suchen")
-    public List<Zuecher> suche(@RequestParam String name) {
-        return zuecherRepository.findByNachnameContainingIgnoreCaseOrderByNachnameAsc(name);
+    @Operation(summary = "Züchter nach Nachname suchen")
+    public List<ZuecherResponseDTO> suche(@RequestParam String name) {
+        return zuecherService.sucheNachNachname(name);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Zuecher anlegen(@Valid @RequestBody Zuecher zuecher) {
-        return zuecherRepository.save(zuecher);
+    @Operation(summary = "Züchter anlegen")
+    public ZuecherResponseDTO anlegen(@Valid @RequestBody ZuecherRequestDTO dto) {
+        return zuecherService.anlegen(dto);
     }
 
     @PutMapping("/{id}")
-    public Zuecher aktualisieren(@PathVariable Long id, @Valid @RequestBody Zuecher zuecher) {
-        zuecher.setId(id);
-        return zuecherRepository.save(zuecher);
+    @Operation(summary = "Züchter vollständig aktualisieren")
+    public ZuecherResponseDTO aktualisieren(@PathVariable Long id,
+                                             @Valid @RequestBody ZuecherRequestDTO dto) {
+        return zuecherService.aktualisieren(id, dto);
     }
 }
 
@@ -107,64 +105,56 @@ class ZuecherController {
 // ============================================================
 @RestController
 @RequestMapping("/v1/schauen/{schauId}/anmeldungen")
-@Tag(name = "Anmeldungen", description = "Vogel-/Käfigverwaltung pro Schau (Schaudaten.DB)")
+@Tag(name = "Anmeldungen", description = "Vogel-/Käfigverwaltung pro Schau")
 @RequiredArgsConstructor
 class SchauanmeldungController {
 
-    private final SchauanmeldungRepository anmeldungRepository;
+    private final SchauanmeldungService anmeldungService;
 
     @GetMapping
     @Operation(summary = "Alle Anmeldungen einer Schau (nach Käfignummer)")
-    public List<Schauanmeldung> alleAnmeldungen(@PathVariable Long schauId) {
-        return anmeldungRepository.findBySchauIdOrderByKaefigNummerAsc(schauId);
+    public List<SchauanmeldungResponseDTO> alleAnmeldungen(@PathVariable Long schauId) {
+        return anmeldungService.alleAnmeldungen(schauId);
     }
 
     @GetMapping("/nicht-platziert")
     @Operation(summary = "Nicht platzierte Vögel (Qualitätskontrolle)")
-    public List<Schauanmeldung> nichtPlatzierte(@PathVariable Long schauId) {
-        return anmeldungRepository.findNichtPlatzierte(schauId);
+    public List<SchauanmeldungResponseDTO> nichtPlatzierte(@PathVariable Long schauId) {
+        return anmeldungService.nichtPlatzierte(schauId);
     }
 
     @GetMapping("/naechste-kaefignummer")
     @Operation(summary = "Nächste freie Käfignummer")
     public Integer naechsteKaefigNummer(@PathVariable Long schauId) {
-        return anmeldungRepository.naechsteKaefigNummer(schauId);
+        return anmeldungService.naechsteKaefigNummer(schauId);
     }
 
     @GetMapping("/kaefig/{kaefigNummer}")
     @Operation(summary = "Käfig per Nummer abrufen")
-    public ResponseEntity<Schauanmeldung> byKaefigNummer(
-            @PathVariable Long schauId, @PathVariable Integer kaefigNummer) {
-        return anmeldungRepository.findBySchauIdAndKaefigNummer(schauId, kaefigNummer)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public SchauanmeldungResponseDTO byKaefigNummer(@PathVariable Long schauId,
+                                                     @PathVariable Integer kaefigNummer) {
+        return anmeldungService.byKaefigNummer(schauId, kaefigNummer); // 404 via GlobalExceptionHandler
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Vogel anmelden")
-    public Schauanmeldung anmelden(@PathVariable Long schauId,
-                                    @Valid @RequestBody Schauanmeldung anmeldung) {
-        return anmeldungRepository.save(anmeldung);
+    public SchauanmeldungResponseDTO anmelden(@PathVariable Long schauId,
+                                               @Valid @RequestBody SchauanmeldungRequestDTO dto) {
+        return anmeldungService.anmelden(schauId, dto);
     }
 
     @PatchMapping("/kaefig/{kaefigNummer}/platzierung/{platz}")
     @Operation(summary = "Platzierung eingeben (1–4)")
-    public ResponseEntity<Schauanmeldung> platzierungEingeben(
-            @PathVariable Long schauId,
-            @PathVariable Integer kaefigNummer,
-            @PathVariable Integer platz) {
-        return anmeldungRepository.findBySchauIdAndKaefigNummer(schauId, kaefigNummer)
-                .map(sa -> {
-                    sa.setPlatzierung(platz);
-                    return ResponseEntity.ok(anmeldungRepository.save(sa));
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public PlatzierungResponseDTO platzierungEingeben(@PathVariable Long schauId,
+                                                       @PathVariable Integer kaefigNummer,
+                                                       @PathVariable Integer platz) {
+        return anmeldungService.platzierungEingeben(schauId, kaefigNummer, platz);
     }
 }
 
 // ============================================================
-// Standgeld-Controller
+// Standgeld-Controller  (war bereits korrekt – unverändert)
 // ============================================================
 @RestController
 @RequestMapping("/v1/schauen/{schauId}/standgeld")
@@ -188,7 +178,7 @@ class StandgeldController {
 }
 
 // ============================================================
-// Medaillen-Controller
+// Medaillen-Controller  (ResponseEntity<Void> → @ResponseStatus void)
 // ============================================================
 @RestController
 @RequestMapping("/v1/schauen/{schauId}/medaillen")
@@ -199,10 +189,10 @@ class MedaillenController {
     private final MedaillenService medaillenService;
 
     @PostMapping("/berechnen")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Medaillen für alle Klassen berechnen")
-    public ResponseEntity<Void> berechnen(@PathVariable Long schauId) {
+    public void berechnen(@PathVariable Long schauId) {
         medaillenService.berechneMedaillenFuerSchau(schauId);
-        return ResponseEntity.ok().build();
     }
 }
 
@@ -211,28 +201,30 @@ class MedaillenController {
 // ============================================================
 @RestController
 @RequestMapping("/v1/schauen/{schauId}/sieger")
-@Tag(name = "Siegerliste", description = "Sieger- und Ehrenliste (Siegerliste.DB)")
+@Tag(name = "Siegerliste", description = "Sieger- und Ehrenliste")
 @RequiredArgsConstructor
 class SiegerController {
 
-    private final SiegerRepository siegerRepository;
+    private final SiegerService siegerService;
 
     @GetMapping
     @Operation(summary = "Siegerliste einer Schau")
-    public List<Sieger> siegerListe(@PathVariable Long schauId) {
-        return siegerRepository.findBySchauIdOrderByKategorieAscPositionAsc(schauId);
+    public List<SiegerResponseDTO> siegerListe(@PathVariable Long schauId) {
+        return siegerService.siegerListe(schauId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Sieger eintragen")
-    public Sieger eintragen(@PathVariable Long schauId, @Valid @RequestBody Sieger sieger) {
-        return siegerRepository.save(sieger);
+    public SiegerResponseDTO eintragen(@PathVariable Long schauId,
+                                        @Valid @RequestBody SiegerRequestDTO dto) {
+        return siegerService.eintragen(schauId, dto);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Sieger löschen")
     public void loeschen(@PathVariable Long schauId, @PathVariable Long id) {
-        siegerRepository.deleteById(id);
+        siegerService.loeschen(schauId, id);
     }
 }

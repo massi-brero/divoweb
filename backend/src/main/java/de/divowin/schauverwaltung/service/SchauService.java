@@ -2,6 +2,7 @@ package de.divowin.schauverwaltung.service;
 
 import de.divowin.schauverwaltung.dto.RichterDTO;
 import de.divowin.schauverwaltung.dto.SchauDTO;
+import de.divowin.schauverwaltung.dto.SchauRequestDTO;
 import de.divowin.schauverwaltung.entity.Richter;
 import de.divowin.schauverwaltung.entity.Schau;
 import de.divowin.schauverwaltung.repository.SchauRepository;
@@ -42,7 +43,14 @@ public class SchauService {
     }
 
     @Transactional
-    public SchauDTO schauAnlegen(Schau schau) {
+    public SchauDTO schauAnlegen(SchauRequestDTO dto) {
+        Schau schau = new Schau();
+        schau.setSchautyp(dto.schautyp());
+        schau.setJahr(dto.jahr());
+        schau.setOrt(dto.ort());
+        schau.setVerband(dto.verband());
+        schau.setStandgeldProVogel(dto.standgeldProVogel());
+        schau.setNotizen(dto.notizen());
         log.info("Neue Schau anlegen: {}", schau.getBezeichnung());
         return toDTOOhneRichter(schauRepository.save(schau));
     }
