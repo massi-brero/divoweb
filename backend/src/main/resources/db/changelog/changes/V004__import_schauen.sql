@@ -9,4 +9,4 @@ INSERT INTO schau (id, schautyp, jahr, ort, verband, standgeld_pro_vogel, status
   (5, 'LANDESSCHAU', 2018, 'Landesschau 2018', 'DWV', 2.50, 'ARCHIVIERT', CURRENT_TIMESTAMP, 0);
 
 -- Sequences nach manuellen Inserts anpassen
-SELECT setval('schau_seq', (SELECT MAX(id) FROM schau) + 1);
+ALTER SEQUENCE schau_seq RESTART WITH 6;
