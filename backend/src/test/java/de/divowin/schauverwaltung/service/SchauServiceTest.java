@@ -1,6 +1,7 @@
 package de.divowin.schauverwaltung.service;
 
 import de.divowin.schauverwaltung.dto.SchauDTO;
+import de.divowin.schauverwaltung.dto.SchauRequestDTO;
 import de.divowin.schauverwaltung.entity.Richter;
 import de.divowin.schauverwaltung.entity.Schau;
 import de.divowin.schauverwaltung.enums.Schautyp;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,7 +31,11 @@ class SchauServiceTest {
     @InjectMocks
     SchauService schauService;
 
+    // Schau-Entity – wird als Repository-Rückgabe verwendet
     private Schau schau;
+
+    // Request-DTO – wird als Service-Input für schauAnlegen verwendet
+    private SchauRequestDTO schauRequestDTO;
 
     @BeforeEach
     void setUp() {
@@ -41,6 +47,15 @@ class SchauServiceTest {
         schau.setVerband(Verband.DWV);
         schau.setStandgeldProVogel(new BigDecimal("2.50"));
         schau.setStatus(Schau.Schaustatus.VORBEREITUNG);
+
+        schauRequestDTO = new SchauRequestDTO(
+                Schautyp.MEISTERSCHAU,
+                2025,
+                "Nürnberg",
+                Verband.DWV,
+                new BigDecimal("2.50"),
+                null
+        );
     }
 
     // ── alleSchauen ─────────────────────────────────────────────────────────
@@ -126,22 +141,24 @@ class SchauServiceTest {
 
     @Test
     void schauAnlegen_persistiertUndGibtDTOZurueck() {
+        // Service baut intern eine neue Schau-Entity – wir matchen mit any()
         Schau gespeichert = new Schau();
         gespeichert.setId(42L);
-        gespeichert.setSchautyp(schau.getSchautyp());
-        gespeichert.setJahr(schau.getJahr());
-        gespeichert.setOrt(schau.getOrt());
-        gespeichert.setVerband(schau.getVerband());
-        gespeichert.setStandgeldProVogel(schau.getStandgeldProVogel());
-        gespeichert.setStatus(schau.getStatus());
+        gespeichert.setSchautyp(Schautyp.MEISTERSCHAU);
+        gespeichert.setJahr(2025);
+        gespeichert.setOrt("Nürnberg");
+        gespeichert.setVerband(Verband.DWV);
+        gespeichert.setStandgeldProVogel(new BigDecimal("2.50"));
+        gespeichert.setStatus(Schau.Schaustatus.VORBEREITUNG);
 
-        when(schauRepository.save(schau)).thenReturn(gespeichert);
+        when(schauRepository.save(any(Schau.class))).thenReturn(gespeichert);
 
-        SchauDTO dto = schauService.schauAnlegen(schau);
+        SchauDTO dto = schauService.schauAnlegen(schauRequestDTO);
 
         assertThat(dto.id()).isEqualTo(42L);
         assertThat(dto.ort()).isEqualTo("Nürnberg");
-        verify(schauRepository).save(schau);
+        assertThat(dto.schautyp()).isEqualTo(Schautyp.MEISTERSCHAU);
+        verify(schauRepository).save(any(Schau.class));
     }
 
     // ── statusAendern ─────────────────────────────────────────────────────────
