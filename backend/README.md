@@ -14,7 +14,7 @@ Neuentwicklung der DivoWin Vogelschau-Verwaltungssoftware auf Basis von Java 21 
 | Sprache | Java 21 |
 | Framework | Spring Boot 3.3 |
 | Datenbankzugriff | Spring Data JPA / Hibernate |
-| Datenbank | PostgreSQL 15+ |
+| Datenbank | PostgreSQL 15+ (Test: H2 In-Memory) |
 | Migrationen | Liquibase |
 | Build | Maven |
 | API-Dokumentation | SpringDoc OpenAPI (Swagger UI) |
@@ -67,10 +67,16 @@ Das Schema wird automatisch durch Liquibase angelegt.
 
 ```
 src/main/resources/db/changelog/
-├── db.changelog-master.xml          # Master-Changelog (inkludiert alle Changes)
+├── db.changelog-master.xml
 └── changes/
-    └── v1-initial-schema.xml        # Alle Tabellen, Constraints, Indizes, Views
+    ├── V001__initial_schema.sql
+    ├── V002__...
+    └── V004__import_schauen.sql
 ```
+
+> **Hinweis zu Import-Skripten:** Sequence-Resets nach manuellen INSERTs müssen mit
+> `ALTER SEQUENCE <name> RESTART WITH <n>` statt `setval()` formuliert werden,
+> da `setval` eine PostgreSQL-exklusive Funktion ist und in H2 (Tests) nicht existiert.
 
 ### Tabellen und Entsprechung zur Altanwendung
 
@@ -85,7 +91,7 @@ src/main/resources/db/changelog/
 | `standgeld` | `[X][Jahr]Standgeld.db` | Standgeld-Abrechnung |
 | `zuecher_platzierung` | `[X][Jahr]ZuePlacier.db` + `Medliste.DB` | Züchter-Gesamtauswertung |
 
-### Schautypen (Feld `schautyp` in Tabelle `schau`)
+### Schautypen
 
 | Wert | Altanwendung-Präfix | Beschreibung |
 |---|---|---|
@@ -102,49 +108,82 @@ src/main/resources/db/changelog/
 
 ```
 src/main/java/de/divowin/schauverwaltung/
-├── SchauverwaltungApplication.java   # Hauptklasse
+├── SchauverwaltungApplication.java
 ├── config/
-│   └── SecurityConfig.java           # Spring Security
+│   ├── JpaConfig.java                    # @EnableJpaAuditing (ausgelagert für Testbarkeit)
+│   └── SecurityConfig.java
 ├── controller/
-│   └── SchauverwaltungController.java # REST-Endpunkte (alle Controller)
+│   ├── GlobalExceptionHandler.java       # RFC-9457 Problem Details
+│   ├── MedaillenController.java
+│   ├── SchauController.java
+│   ├── SchauanmeldungController.java
+│   ├── SiegerController.java
+│   ├── StandgeldController.java
+│   └── ZuecherController.java
 ├── dto/
-│   ├── RichterDTO.java               # DTO für Richter (Teil von SchauDTO)
-│   ├── SchauDTO.java                 # DTO für Schau-Rückgaben
-│   └── StandgeldDTO.java             # DTO für Standgeld-Rückgaben
+│   ├── PlatzierungResponseDTO.java
+│   ├── RichterDTO.java
+│   ├── SchauDTO.java
+│   ├── SchauRequestDTO.java
+│   ├── SchauanmeldungRequestDTO.java
+│   ├── SchauanmeldungResponseDTO.java
+│   ├── SiegerRequestDTO.java
+│   ├── SiegerResponseDTO.java
+│   ├── StandgeldDTO.java
+│   ├── ZuecherRequestDTO.java
+│   └── ZuecherResponseDTO.java
 ├── entity/
-│   ├── BaseEntity.java               # Audit-Basisklasse
-│   ├── Zuecher.java                  # ← Adressen.DB
-│   ├── Vogelklasse.java              # ← Farbe.DB
-│   ├── Schau.java                    # ← Zuri.db
-│   ├── Richter.java                  # ← ZuRi1-18 Felder
-│   ├── Schauanmeldung.java           # ← Schaudaten.DB (Haupttabelle)
-│   ├── Sieger.java                   # ← Siegerliste.db
-│   ├── Standgeld.java                # ← Standgeld.db
-│   └── ZuecherPlatzierung.java       # ← ZuePlacier.db + Medliste.DB
+│   ├── BaseEntity.java
+│   ├── Richter.java
+│   ├── Schau.java
+│   ├── Schauanmeldung.java
+│   ├── Sieger.java
+│   ├── Standgeld.java
+│   ├── Vogelklasse.java
+│   ├── Zuecher.java
+│   └── ZuecherPlatzierung.java
 ├── enums/
 │   ├── Geschlecht.java
-│   ├── Medaille.java                 # inkl. Berechnungsregel
-│   ├── Platzierungskennzeichen.java  # NORMAL / NE / FK
+│   ├── Medaille.java                     # inkl. Berechnungsregel
+│   ├── Platzierungskennzeichen.java      # NORMAL / NE / FK
 │   ├── Schautyp.java
-│   └── Verband.java                  # DWV, AZ, AGZ, AEZ, ...
+│   └── Verband.java                      # DWV, AZ, AGZ, AEZ, ...
 ├── repository/
 │   ├── SchauRepository.java
-│   ├── ZuecherRepository.java
 │   ├── SchauanmeldungRepository.java
-│   ├── VogelklasseRepository.java
 │   ├── SiegerRepository.java
 │   ├── StandgeldRepository.java
-│   └── ZuecherPlatzierungRepository.java
+│   ├── VogelklasseRepository.java
+│   ├── ZuecherPlatzierungRepository.java
+│   └── ZuecherRepository.java
 └── service/
-    ├── SchauService.java             # gibt SchauDTO / List<SchauDTO> zurück
-    ├── MedaillenService.java         # Medaillen-Berechnungslogik
-    └── StandgeldService.java         # gibt StandgeldDTO / List<StandgeldDTO> zurück
+    ├── MedaillenService.java
+    ├── SchauService.java
+    ├── SchauanmeldungService.java
+    ├── SiegerService.java
+    ├── StandgeldService.java
+    └── ZuecherService.java
 
 src/test/java/de/divowin/schauverwaltung/
-├── SchauverwaltungApplicationTests.java  # Kontexttest
+├── controller/
+│   ├── GlobalExceptionHandlerTest.java
+│   ├── MedaillenControllerTest.java
+│   ├── SchauControllerTest.java
+│   ├── SchauanmeldungControllerTest.java
+│   ├── SiegerControllerTest.java
+│   ├── StandgeldControllerTest.java
+│   └── ZuecherControllerTest.java
+├── entity/
+│   └── EntityTests.java                  # Schauanmeldung, Standgeld, Vogelklasse, Zuecher, Richter
+├── enums/
+│   └── EnumTests.java                    # Medaille, Geschlecht, Platzierungskennzeichen, Schautyp, Verband
 └── service/
-    ├── SchauServiceTest.java             # Unit-Tests SchauService
-    └── StandgeldServiceTest.java         # Unit-Tests StandgeldService
+    ├── MedaillenServiceTest.java
+    ├── SchauServiceTest.java
+    ├── SchauanmeldungServiceTest.java
+    ├── SiegerServiceTest.java
+    ├── StandgeldServiceTest.java
+    └── ZuecherServiceTest.java
 ```
 
 ---
@@ -153,49 +192,162 @@ src/test/java/de/divowin/schauverwaltung/
 
 ```
 Controller  →  Service  →  Repository  →  Datenbank
-               ↓
-              DTO
+    ↓              ↓
+RequestDTO     ResponseDTO
 ```
 
-Services geben ausschließlich DTOs zurück – JPA-Entitäten verlassen die Service-Schicht nicht. Controller, die keine eigene Service-Schicht besitzen (Züchter, Anmeldungen, Sieger), arbeiten noch direkt auf den Repositories und liefern die Entitäten als JSON-Response.
+Alle Controller arbeiten ausschließlich mit DTOs – JPA-Entitäten werden nie direkt als HTTP-Request oder -Response exponiert. Das Mapping zwischen Entity und DTO geschieht vollständig in der Service-Schicht.
 
-### DTOs
+Fehlerbehandlung erfolgt zentral im `GlobalExceptionHandler` (`@RestControllerAdvice`). Controller-Methoden werfen keine `ResponseEntity`-Konstrukte, sondern die Services lösen typisierte Exceptions aus:
 
-Alle DTOs sind als **Java Records** implementiert und damit unveränderlich.
+| Exception | HTTP-Status |
+|---|---|
+| `EntityNotFoundException` | 404 Not Found |
+| `IllegalArgumentException` | 400 Bad Request |
+| `MethodArgumentNotValidException` | 422 Unprocessable Entity |
 
-| DTO | Service | Felder |
+---
+
+## DTOs
+
+Alle DTOs sind als **Java Records** implementiert und damit unveränderlich. Jeder Endpunkt besitzt ein dediziertes Request- und Response-DTO.
+
+### Request-DTOs (Eingabe)
+
+| DTO | Endpunkt | Pflichtfelder |
 |---|---|---|
-| `SchauDTO` | `SchauService` | id, schautyp, jahr, ort, verband, standgeldProVogel, status, notizen, bezeichnung, richter |
-| `RichterDTO` | Teil von `SchauDTO` | id, position, nachname, vorname, vollname |
-| `StandgeldDTO` | `StandgeldService` | id, schauId, zuecherId, zuecherNachname, zuecherVorname, anzahlGemeldet, anzahlEingeliefert, standgeldProVogel, gesamtbetrag, bezahlt |
+| `SchauRequestDTO` | `POST /v1/schauen` | schautyp, jahr, ort, verband, standgeldProVogel |
+| `ZuecherRequestDTO` | `POST/PUT /v1/zuecher` | verbandsnummer, verband, nachname |
+| `SchauanmeldungRequestDTO` | `POST /v1/schauen/{id}/anmeldungen` | zuecherId, vogelklasseId, geschlecht |
+| `SiegerRequestDTO` | `POST /v1/schauen/{id}/sieger` | kategorie, zuecherId |
 
-> **Hinweis:** Listenabfragen (`alleSchauen`, `schauenNachJahr`) liefern `SchauDTO` mit einer leeren Richter-Liste. Die Richter werden nur beim Einzelabruf (`schauById`) per JOIN FETCH geladen und vollständig gemappt.
+### Response-DTOs (Ausgabe)
+
+| DTO | Beschreibung |
+|---|---|
+| `SchauDTO` | Schau inkl. optionaler Richter-Liste |
+| `RichterDTO` | Eingebettet in `SchauDTO` |
+| `ZuecherResponseDTO` | Züchter ohne JPA-Internas, mit berechnetem `vollname` |
+| `SchauanmeldungResponseDTO` | Käfig mit denormalisierten Züchter- und Klassenfeldern |
+| `PlatzierungResponseDTO` | Schlanke Rückgabe nach Platzierungs-Update |
+| `SiegerResponseDTO` | Sieger mit optionalen Käfig- und Klassenfeldern |
+| `StandgeldDTO` | Standgeld-Abrechnung pro Züchter |
+
+> Listenabfragen (`alleSchauen`, `schauenNachJahr`) liefern `SchauDTO` mit leerer Richter-Liste.
+> Richter werden nur bei `schauById` per `JOIN FETCH` geladen.
+
+---
+
+## API-Endpunkte
+
+### Schauen `/v1/schauen`
+
+| Methode | Pfad | Beschreibung |
+|---|---|---|
+| `GET` | `/v1/schauen` | Alle Schauen |
+| `GET` | `/v1/schauen/jahr/{jahr}` | Schauen nach Jahrgang |
+| `GET` | `/v1/schauen/{id}` | Einzelne Schau mit Richtern |
+| `POST` | `/v1/schauen` | Neue Schau anlegen |
+| `PATCH` | `/v1/schauen/{id}/status/{status}` | Schaustatus ändern |
+
+### Züchter `/v1/zuecher`
+
+| Methode | Pfad | Beschreibung |
+|---|---|---|
+| `GET` | `/v1/zuecher` | Alle Züchter |
+| `GET` | `/v1/zuecher/{id}` | Einzelnen Züchter abrufen |
+| `GET` | `/v1/zuecher/suche?name=` | Suche nach Nachname |
+| `POST` | `/v1/zuecher` | Züchter anlegen |
+| `PUT` | `/v1/zuecher/{id}` | Züchter vollständig aktualisieren |
+
+### Anmeldungen `/v1/schauen/{schauId}/anmeldungen`
+
+| Methode | Pfad | Beschreibung |
+|---|---|---|
+| `GET` | `.../anmeldungen` | Alle Anmeldungen (nach Käfignummer) |
+| `GET` | `.../anmeldungen/nicht-platziert` | Qualitätskontrolle: unbewertet |
+| `GET` | `.../anmeldungen/naechste-kaefignummer` | Nächste freie Käfignummer |
+| `GET` | `.../anmeldungen/kaefig/{nr}` | Käfig per Nummer |
+| `POST` | `.../anmeldungen` | Vogel anmelden (Käfignummer wird automatisch vergeben) |
+| `PATCH` | `.../anmeldungen/kaefig/{nr}/platzierung/{platz}` | Platzierung eingeben |
+
+### Standgeld `/v1/schauen/{schauId}/standgeld`
+
+| Methode | Pfad | Beschreibung |
+|---|---|---|
+| `GET` | `.../standgeld` | Übersicht |
+| `POST` | `.../standgeld/berechnen` | Neu berechnen |
+
+### Medaillen `/v1/schauen/{schauId}/medaillen`
+
+| Methode | Pfad | Beschreibung |
+|---|---|---|
+| `POST` | `.../medaillen/berechnen` | Medaillen für alle Klassen berechnen |
+
+### Sieger `/v1/schauen/{schauId}/sieger`
+
+| Methode | Pfad | Beschreibung |
+|---|---|---|
+| `GET` | `.../sieger` | Siegerliste |
+| `POST` | `.../sieger` | Sieger eintragen |
+| `DELETE` | `.../sieger/{id}` | Sieger löschen |
 
 ---
 
 ## Geschäftslogik
 
 ### Medaillenberechnung (`MedaillenService`)
-Automatische Vergabe nach der Regel aus der Altanwendung:
-- **Gold:** ≥ 7 Vögel aus ≥ 2 Züchtern in der Klasse
-- **Silber:** ≥ 5 Vögel aus ≥ 2 Züchtern
-- **Bronze:** ≥ 3 Vögel aus ≥ 2 Züchtern
-- **Keine:** < 3 Vögel oder nur 1 Züchter
 
-NE (nicht eingeliefert) und FK (falsche Klasse) werden nicht gezählt.
+Automatische Vergabe nach der Regel aus der Altanwendung (Feld `Medaille` in Schaudaten.db):
+
+| Medaille | Mindest-Vögel | Mindest-Züchter |
+|---|---|---|
+| Gold | 7 | 2 |
+| Silber | 5 | 2 |
+| Bronze | 3 | 2 |
+| Keine | – | – |
+
+NE (nicht eingeliefert) und FK (falsche Klasse) werden nicht gezählt. Nicht platzierte Vögel erhalten auch bei medaillenberechtigter Klasse `KEINE`.
 
 ### Standgeldberechnung (`StandgeldService`)
-- Pro eingelierfertem Vogel × Standgeld-Satz aus Schaukonfiguration
-- NE-Vögel werden nicht berechnet
+
+- Pro eingelierfertem Vogel × Standgeld-Satz aus der Schaukonfiguration
+- NE-Vögel (nicht eingeliefert) werden nicht berechnet
+- Bestehende Standgeld-Datensätze werden bei Neuberechnung aktualisiert (kein Duplikat)
+
+### Käfignummernvergabe
+
+Die Käfignummer wird beim Anmelden automatisch als `MAX(kaefigNummer) + 1` vergeben und nie wiederverwendet — identisches Verhalten zur Altanwendung.
+
+---
+
+## Tests
+
+### Strategie
+
+| Ebene | Framework | Fokus |
+|---|---|---|
+| Service | Mockito (`@ExtendWith`) | Geschäftslogik, Mapping, Fehlerpfade |
+| Controller | MockMvc (`@WebMvcTest`) | HTTP-Status, JSON-Struktur, Validierung |
+| Entity | JUnit 5 (plain) | Berechnungsmethoden, Transient-Felder |
+| Enum | JUnit 5 (plain) | `vonAltCode`/`vonKuerzel`, Randfälle |
+
+### Konfiguration für `@WebMvcTest`
+
+Da `@EnableJpaAuditing` in der separaten `JpaConfig`-Klasse liegt (nicht in der Hauptklasse), wird der `jpaAuditingHandler` bei `@WebMvcTest` nicht geladen. Controller-Tests benötigen daher **keinen** `@MockBean(JpaMetamodelMappingContext.class)`-Workaround.
+
+```bash
+mvn test
+```
 
 ---
 
 ## TODO / Offene Punkte
 
 - [ ] JWT-Authentifizierung implementieren
-- [ ] PDF-Generierung (Käfigaufkleber, Bewertungslisten, Katalog, Urkunden)
-- [ ] HTML-Export Siegerliste (entspricht `Siegerliste_Internet.exe`)
+- [ ] `ZuecherPlatzierung`-Berechnung (Aggregation aller Vogelpunkte)
 - [ ] Klassen-Konsolidierungslogik (Dunkelfarben-Regelung AZ-DWV)
 - [ ] Richter-Zuweisung zu Käfigen
-- [ ] ZuecherPlatzierung-Berechnung (Aggregation aller Vogelpunkte)
-- [ ] Testcontainers-Tests mit PostgreSQL
+- [ ] PDF-Generierung (Käfigaufkleber, Bewertungslisten, Katalog, Urkunden)
+- [ ] HTML-Export Siegerliste (entspricht `Siegerliste_Internet.exe`)
+- [ ] Testcontainers-Integration für PostgreSQL-spezifische Tests
