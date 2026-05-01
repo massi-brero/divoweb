@@ -2,6 +2,7 @@ package de.divowin.schauverwaltung.service;
 
 import de.divowin.schauverwaltung.dto.StandgeldDTO;
 import de.divowin.schauverwaltung.entity.*;
+import de.divowin.schauverwaltung.enums.*;
 import de.divowin.schauverwaltung.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,72 +16,131 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class StandgeldServiceTest {
 
-    @Mock
-    SchauRepository schauRepository;
+    @Mock SchauRepository schauRepository;
+    @Mock SchauanmeldungRepository anmeldungRepository;
+    @Mock StandgeldRepository standgeldRepository;
 
-    @Mock
-    SchauanmeldungRepository anmeldungRepository;
-
-    @Mock
-    StandgeldRepository standgeldRepository;
-
-    @InjectMocks
-    StandgeldService standgeldService;
+    @InjectMocks StandgeldService standgeldService;
 
     private Schau schau;
     private Zuecher zuecher;
+    private Vogelklasse vogelklasse;
+    private Schauanmeldung anmeldung1;
+    private Schauanmeldung anmeldung2;
+    private Standgeld standgeld;
 
     @BeforeEach
     void setUp() {
         schau = new Schau();
         schau.setId(1L);
+        schau.setSchautyp(Schautyp.MEISTERSCHAU);
+        schau.setJahr(2025);
+        schau.setOrt("Nürnberg");
+        schau.setVerband(Verband.DWV);
         schau.setStandgeldProVogel(new BigDecimal("2.50"));
 
         zuecher = new Zuecher();
         zuecher.setId(10L);
         zuecher.setNachname("Mustermann");
         zuecher.setVorname("Max");
-        zuecher.setVerbandsnummer("12345");
+        zuecher.setVerbandsnummer("10294");
+
+        vogelklasse = new Vogelklasse();
+        vogelklasse.setId(5L);
+        vogelklasse.setSkl1("WP");
+        vogelklasse.setFarbe1("Grau");
+
+        anmeldung1 = new Schauanmeldung();
+        anmeldung1.setId(100L);
+        anmeldung1.setSchau(schau);
+        anmeldung1.setZuecher(zuecher);
+        anmeldung1.setVogelklasse(vogelklasse);
+        anmeldung1.setKaefigNummer(1);
+        anmeldung1.setGeschlecht(Geschlecht.MAENNLICH);
+        anmeldung1.setEingeliefert(true);
+        anmeldung1.setPlatzierungskennzeichen(Platzierungskennzeichen.NORMAL);
+        anmeldung1.setMedaille(Medaille.KEINE);
+
+        anmeldung2 = new Schauanmeldung();
+        anmeldung2.setId(101L);
+        anmeldung2.setSchau(schau);
+        anmeldung2.setZuecher(zuecher);
+        anmeldung2.setVogelklasse(vogelklasse);
+        anmeldung2.setKaefigNummer(2);
+        anmeldung2.setGeschlecht(Geschlecht.WEIBLICH);
+        anmeldung2.setEingeliefert(false); // NE-Vogel
+        anmeldung2.setPlatzierungskennzeichen(Platzierungskennzeichen.NICHT_EINGELIEFERT);
+        anmeldung2.setMedaille(Medaille.KEINE);
+
+        standgeld = new Standgeld();
+        standgeld.setId(200L);
+        standgeld.setSchau(schau);
+        standgeld.setZuecher(zuecher);
+        standgeld.setAnzahlGemeldet(2);
+        standgeld.setAnzahlEingeliefert(1);
+        standgeld.setStandgeldProVogel(new BigDecimal("2.50"));
+        standgeld.setGesamtbetrag(new BigDecimal("2.50"));
     }
 
-    // ── uebersichtFuerSchau ──────────────────────────────────────────────────
+    // ── uebersichtFuerSchau ───────────────────────────────────────────────────
 
     @Test
-    void uebersichtFuerSchau_gibtStandgeldDTOsZurueck() {
-        Standgeld sg = buildStandgeld(3, 2);
+    void uebersichtFuerSchau_gibtDTOListeZurueck() {
         when(standgeldRepository.findBySchauIdOrderByZuecherNachnameAsc(1L))
-                .thenReturn(List.of(sg));
+                .thenReturn(List.of(standgeld));
 
         List<StandgeldDTO> result = standgeldService.uebersichtFuerSchau(1L);
 
         assertThat(result).hasSize(1);
         StandgeldDTO dto = result.get(0);
+        assertThat(dto.id()).isEqualTo(200L);
         assertThat(dto.zuecherNachname()).isEqualTo("Mustermann");
-        assertThat(dto.anzahlGemeldet()).isEqualTo(3);
-        assertThat(dto.anzahlEingeliefert()).isEqualTo(2);
-        assertThat(dto.gesamtbetrag()).isEqualByComparingTo("5.00");
+        assertThat(dto.anzahlGemeldet()).isEqualTo(2);
+        assertThat(dto.anzahlEingeliefert()).isEqualTo(1);
+        assertThat(dto.gesamtbetrag()).isEqualByComparingTo("2.50");
+    }
+
+    // ── berechneStandgeldFuerSchau ────────────────────────────────────────────
+
+    @Test
+    void berechneStandgeld_berechnetKorrektEingeliefertVsGemeldet() {
+        when(schauRepository.findById(1L)).thenReturn(Optional.of(schau));
+        when(anmeldungRepository.findBySchauIdOrderByKaefigNummerAsc(1L))
+                .thenReturn(List.of(anmeldung1, anmeldung2));
+        when(standgeldRepository.findBySchauIdAndZuecherId(1L, 10L))
+                .thenReturn(Optional.empty());
+        when(standgeldRepository.save(any(Standgeld.class))).thenReturn(standgeld);
+
+        List<StandgeldDTO> result = standgeldService.berechneStandgeldFuerSchau(1L);
+
+        assertThat(result).hasSize(1);
+        verify(standgeldRepository).save(argThat(sg ->
+                sg.getAnzahlGemeldet() == 2 && sg.getAnzahlEingeliefert() == 1
+        ));
     }
 
     @Test
-    void uebersichtFuerSchau_liefertLeereListe_wennKeineEintraege() {
-        when(standgeldRepository.findBySchauIdOrderByZuecherNachnameAsc(1L))
-                .thenReturn(List.of());
+    void berechneStandgeld_aktualisiertVorhandenenDatensatz() {
+        when(schauRepository.findById(1L)).thenReturn(Optional.of(schau));
+        when(anmeldungRepository.findBySchauIdOrderByKaefigNummerAsc(1L))
+                .thenReturn(List.of(anmeldung1));
+        when(standgeldRepository.findBySchauIdAndZuecherId(1L, 10L))
+                .thenReturn(Optional.of(standgeld));
+        when(standgeldRepository.save(any(Standgeld.class))).thenReturn(standgeld);
 
-        List<StandgeldDTO> result = standgeldService.uebersichtFuerSchau(1L);
+        standgeldService.berechneStandgeldFuerSchau(1L);
 
-        assertThat(result).isEmpty();
+        verify(standgeldRepository).save(standgeld); // vorhandenes Objekt – kein neues
     }
 
-    // ── berechneStandgeldFuerSchau ───────────────────────────────────────────
-
     @Test
-    void berechneStandgeldFuerSchau_wirftException_wennSchauNichtGefunden() {
+    void berechneStandgeld_wirftException_wennSchauNichtGefunden() {
         when(schauRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> standgeldService.berechneStandgeldFuerSchau(99L))
@@ -89,88 +149,14 @@ class StandgeldServiceTest {
     }
 
     @Test
-    void berechneStandgeldFuerSchau_berechnetGesamtbetragKorrekt() {
-        Schauanmeldung anmeldung1 = buildAnmeldung(true);
-        Schauanmeldung anmeldung2 = buildAnmeldung(true);
-        Schauanmeldung anmeldung3 = buildAnmeldung(false); // NE
-
+    void berechneStandgeld_leereListeWennKeineAnmeldungen() {
         when(schauRepository.findById(1L)).thenReturn(Optional.of(schau));
         when(anmeldungRepository.findBySchauIdOrderByKaefigNummerAsc(1L))
-                .thenReturn(List.of(anmeldung1, anmeldung2, anmeldung3));
-        when(standgeldRepository.findBySchauIdAndZuecherId(eq(1L), eq(10L)))
-                .thenReturn(Optional.empty());
-
-        Standgeld gespeichert = buildStandgeld(3, 2);
-        when(standgeldRepository.save(any(Standgeld.class))).thenReturn(gespeichert);
+                .thenReturn(List.of());
 
         List<StandgeldDTO> result = standgeldService.berechneStandgeldFuerSchau(1L);
 
-        assertThat(result).hasSize(1);
-        // 2 eingelieferte Vögel × 2,50 € = 5,00 €
-        assertThat(result.get(0).gesamtbetrag()).isEqualByComparingTo("5.00");
-        assertThat(result.get(0).anzahlGemeldet()).isEqualTo(3);
-        assertThat(result.get(0).anzahlEingeliefert()).isEqualTo(2);
-    }
-
-    @Test
-    void berechneStandgeldFuerSchau_gibtNurDTOsZurueck() {
-        Schauanmeldung anmeldung = buildAnmeldung(true);
-        when(schauRepository.findById(1L)).thenReturn(Optional.of(schau));
-        when(anmeldungRepository.findBySchauIdOrderByKaefigNummerAsc(1L))
-                .thenReturn(List.of(anmeldung));
-        when(standgeldRepository.findBySchauIdAndZuecherId(anyLong(), anyLong()))
-                .thenReturn(Optional.empty());
-        when(standgeldRepository.save(any())).thenReturn(buildStandgeld(1, 1));
-
-        List<StandgeldDTO> result = standgeldService.berechneStandgeldFuerSchau(1L);
-
-        assertThat(result).allSatisfy(dto -> {
-            assertThat(dto).isInstanceOf(StandgeldDTO.class);
-            assertThat(dto.schauId()).isEqualTo(1L);
-            assertThat(dto.zuecherId()).isEqualTo(10L);
-            assertThat(dto.zuecherNachname()).isEqualTo("Mustermann");
-        });
-    }
-
-    @Test
-    void berechneStandgeldFuerSchau_aktualisiertBestehendeDatenbankzeile() {
-        Schauanmeldung anmeldung = buildAnmeldung(true);
-        Standgeld bestehend = new Standgeld();
-        bestehend.setId(99L);
-
-        when(schauRepository.findById(1L)).thenReturn(Optional.of(schau));
-        when(anmeldungRepository.findBySchauIdOrderByKaefigNummerAsc(1L))
-                .thenReturn(List.of(anmeldung));
-        when(standgeldRepository.findBySchauIdAndZuecherId(1L, 10L))
-                .thenReturn(Optional.of(bestehend));
-        when(standgeldRepository.save(any())).thenReturn(buildStandgeld(1, 1));
-
-        standgeldService.berechneStandgeldFuerSchau(1L);
-
-        // Kein neues Objekt anlegen – vorhandenes wird wiederverwendet
-        verify(standgeldRepository).save(argThat(sg -> sg.getId() == null || sg.getId() == 99L));
-    }
-
-    // ── Hilfsmethoden ────────────────────────────────────────────────────────
-
-    private Schauanmeldung buildAnmeldung(boolean eingeliefert) {
-        Schauanmeldung sa = new Schauanmeldung();
-        sa.setZuecher(zuecher);
-        sa.setSchau(schau);
-        sa.setEingeliefert(eingeliefert);
-        sa.setKaefigNummer(1);
-        return sa;
-    }
-
-    private Standgeld buildStandgeld(int gemeldet, int eingeliefert) {
-        Standgeld sg = new Standgeld();
-        sg.setId(1L);
-        sg.setSchau(schau);
-        sg.setZuecher(zuecher);
-        sg.setAnzahlGemeldet(gemeldet);
-        sg.setAnzahlEingeliefert(eingeliefert);
-        sg.setStandgeldProVogel(new BigDecimal("2.50"));
-        sg.berechnen();
-        return sg;
+        assertThat(result).isEmpty();
+        verify(standgeldRepository, never()).save(any());
     }
 }
