@@ -1,0 +1,655 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!-- ============================================================
+         DivoWin Schauverwaltung – Initiales Datenbankschema
+         Entspricht den Paradox-Tabellen der Altanwendung (DivoWin 2018)
+         Zieldatenbank: PostgreSQL 15+
+         ============================================================ -->
+
+    <!-- Sequenzen -->
+    <changeSet id="v1-sequences" author="divowin">
+        <createSequence sequenceName="zuecher_seq"             startValue="1" incrementBy="1"/>
+        <createSequence sequenceName="vogelklasse_seq"         startValue="1" incrementBy="1"/>
+        <createSequence sequenceName="schau_seq"               startValue="1" incrementBy="1"/>
+        <createSequence sequenceName="richter_seq"             startValue="1" incrementBy="1"/>
+        <createSequence sequenceName="schauanmeldung_seq"      startValue="1" incrementBy="1"/>
+        <createSequence sequenceName="sieger_seq"              startValue="1" incrementBy="1"/>
+        <createSequence sequenceName="standgeld_seq"           startValue="1" incrementBy="1"/>
+        <createSequence sequenceName="zuecher_platzierung_seq" startValue="1" incrementBy="1"/>
+    </changeSet>
+
+    <!-- ============================================================
+         ZUECHER (entspricht Adressen.DB)
+         ============================================================ -->
+    <changeSet id="v1-table-zuecher" author="divowin">
+        <createTable tableName="zuecher"
+                     remarks="Züchter/Aussteller – entspricht Adressen.DB der Altanwendung">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="zuecher_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="verbandsnummer" type="VARCHAR(20)"
+                    remarks="Verbandsmitgliedsnummer (Feld ZuechterNr in Altanwendung)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="verband" type="VARCHAR(20)"
+                    remarks="Verband (Feld Sparte in Altanwendung)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="nachname" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vorname" type="VARCHAR(100)"/>
+            <column name="strasse" type="VARCHAR(200)"/>
+            <!-- plz: in Schaudaten vorhanden, fehlte in Altanwendung-Adressbuch -->
+            <column name="plz" type="VARCHAR(15)"/>
+            <column name="wohnort" type="VARCHAR(100)"/>
+            <!-- land: VARCHAR(50) – Werte wie "Deutschland", "Frankreich" passen nicht in VARCHAR(10) -->
+            <column name="land" type="VARCHAR(50)"
+                    remarks="Länderkennzeichen oder Vollname: D, CH, Deutschland, Frankreich, ..."/>
+            <!-- telefon: in Adressen.DB vorhanden, fehlte im ursprünglichen Entity-Design -->
+            <column name="telefon" type="VARCHAR(30)"/>
+            <column name="katalog_einverstaendnis" type="BOOLEAN" defaultValueBoolean="false"
+                    remarks="DSGVO: Einverständnis zur Katalogveröffentlichung">
+                <constraints nullable="false"/>
+            </column>
+            <column name="erstellt_am" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="geaendert_am" type="TIMESTAMP"/>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="zuecher"
+                columnNames="verbandsnummer, verband"
+                constraintName="uq_zuecher_verbandsnummer_verband"/>
+
+        <!-- Alle Verbände aus Altdaten: DWV, AZ, AGZ, DSV (deutschsprachig),
+             OWV/OKB/SWV/KCHA/ZEWA (Österreich/Schweiz),
+             AEZ/AEV/AFZ/AFO/EF/FU/SLO (international),
+             WSC/DKB (Spezialclubs), SONSTIGE (Fallback) -->
+        <sql>ALTER TABLE zuecher ADD CONSTRAINT chk_zuecher_verband
+            CHECK (verband IN (
+            'DWV','AZ','AGZ','DSV',
+            'OWV','OKB','SWV','KCHA','ZEWA',
+            'AEZ','AEV','AFZ','AFO','EF','FU','SLO',
+            'WSC','DKB',
+            'SONSTIGE'
+            ))</sql>
+
+        <createIndex tableName="zuecher" indexName="idx_zuecher_verbandsnummer">
+            <column name="verbandsnummer"/>
+        </createIndex>
+        <createIndex tableName="zuecher" indexName="idx_zuecher_nachname">
+            <column name="nachname"/>
+        </createIndex>
+        <createIndex tableName="zuecher" indexName="idx_zuecher_land">
+            <column name="land"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ============================================================
+         VOGELKLASSE (entspricht Farbe.DB)
+         ============================================================ -->
+    <changeSet id="v1-table-vogelklasse" author="divowin">
+        <createTable tableName="vogelklasse"
+                     remarks="Vogelklassen/Farbklassen – entspricht Farbe.DB der Altanwendung">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="vogelklasse_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="skl1" type="VARCHAR(20)"
+                    remarks="1. Teil Klassenschlüssel – Hauptklasse/Vogelart (Feld Skl1 in Altanwendung)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- skl2/skl3: Default '' damit Unique-Constraint mit Import-Daten harmoniert
+                 (Imports schreiben leere Strings statt NULL für fehlende Schlüsselteile) -->
+            <column name="skl2" type="VARCHAR(20)" defaultValue=""
+                    remarks="2. Teil Klassenschlüssel – Farbengruppe (Feld Skl2 in Altanwendung)"/>
+            <column name="skl3" type="VARCHAR(20)" defaultValue=""
+                    remarks="3. Teil Klassenschlüssel – Farbvariante (Feld Skl3 in Altanwendung)"/>
+            <column name="farbe1" type="VARCHAR(150)"
+                    remarks="Primäre Farbbezeichnung (Feld Farbe1 in Altanwendung)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="farbe2" type="VARCHAR(150)"
+                    remarks="Sekundäre Farbbezeichnung (Feld Farbe2 in Altanwendung)"/>
+            <column name="zusatzbezeichnung" type="VARCHAR(200)"
+                    remarks="Für konsolidierte Klassen (Feld ZusBez in Altanwendung)"/>
+            <column name="dunkelfarbe" type="BOOLEAN" defaultValueBoolean="false"
+                    remarks="AZ-DWV Dunkelfarben-Konsolidierungsregelung">
+                <constraints nullable="false"/>
+            </column>
+            <column name="erstellt_am" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="geaendert_am" type="TIMESTAMP"/>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="vogelklasse"
+                columnNames="skl1, skl2, skl3"
+                constraintName="uq_vogelklasse_schluessel"/>
+
+        <createIndex tableName="vogelklasse" indexName="idx_vogelklasse_skl1">
+            <column name="skl1"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ============================================================
+         SCHAU (entspricht [X][Jahr]Zuri.db)
+         ============================================================ -->
+    <changeSet id="v1-table-schau" author="divowin">
+        <createTable tableName="schau"
+                     remarks="Schaukonfiguration – entspricht [X][Jahr]Zuri.db der Altanwendung">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="schau_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="schautyp" type="VARCHAR(20)"
+                    remarks="B=Bundesschau C=Club E=Europa L=Landes M=Meister V=Verein">
+                <constraints nullable="false"/>
+            </column>
+            <column name="jahr" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ort" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="verband" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="standgeld_pro_vogel" type="DECIMAL(6,2)" defaultValueNumeric="2.50"
+                    remarks="Feld StandGeld in Altanwendung (typisch 2,50–3,00 €)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(30)" defaultValue="VORBEREITUNG">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notizen" type="TEXT"/>
+            <column name="erstellt_am" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="geaendert_am" type="TIMESTAMP"/>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="schau"
+                columnNames="schautyp, jahr, verband"
+                constraintName="uq_schau_typ_jahr_verband"/>
+
+        <sql>ALTER TABLE schau ADD CONSTRAINT chk_schau_typ
+            CHECK (schautyp IN ('BUNDESSCHAU','CLUBSCHAU','EUROPASCHAU','LANDESSCHAU','MEISTERSCHAU','VEREINSSCHAU'))</sql>
+
+        <sql>ALTER TABLE schau ADD CONSTRAINT chk_schau_jahr
+            CHECK (jahr BETWEEN 2000 AND 2100)</sql>
+
+        <sql>ALTER TABLE schau ADD CONSTRAINT chk_schau_status
+            CHECK (status IN ('VORBEREITUNG','ANMELDUNG_OFFEN','ANMELDUNG_GESCHLOSSEN','BEWERTUNG_LAEUFT','ABGESCHLOSSEN','ARCHIVIERT'))</sql>
+
+        <createIndex tableName="schau" indexName="idx_schau_jahr">
+            <column name="jahr"/>
+        </createIndex>
+        <createIndex tableName="schau" indexName="idx_schau_typ">
+            <column name="schautyp"/>
+        </createIndex>
+        <createIndex tableName="schau" indexName="idx_schau_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ============================================================
+         RICHTER (entspricht Felder ZuRi1–ZuRi18 in Zuri.db)
+         ============================================================ -->
+    <changeSet id="v1-table-richter" author="divowin">
+        <createTable tableName="richter"
+                     remarks="Zuchtrichter – entspricht Feldern ZuRi1-ZuRi18 der Zuri.db (normalisiert)">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="richter_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="schau_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_richter_schau"
+                             references="schau(id)"/>
+            </column>
+            <column name="position" type="INTEGER"
+                    remarks="Suffix in Altanwendung: ZuRi1=1, ZuRi2=2, ... ZuRi18=18">
+                <constraints nullable="false"/>
+            </column>
+            <column name="nachname" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vorname" type="VARCHAR(100)"/>
+            <column name="erstellt_am" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="geaendert_am" type="TIMESTAMP"/>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="richter"
+                columnNames="schau_id, position"
+                constraintName="uq_richter_schau_position"/>
+
+        <sql>ALTER TABLE richter ADD CONSTRAINT chk_richter_position
+            CHECK (position BETWEEN 1 AND 18)</sql>
+
+        <createIndex tableName="richter" indexName="idx_richter_schau">
+            <column name="schau_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ============================================================
+         SCHAUANMELDUNG (entspricht [X][Jahr]Schaudaten.db)
+         Zentrale Haupttabelle – ein Datensatz pro Vogel/Käfig
+         ============================================================ -->
+    <changeSet id="v1-table-schauanmeldung" author="divowin">
+        <createTable tableName="schauanmeldung"
+                     remarks="Käfig/Vogeldaten – entspricht [X][Jahr]Schaudaten.db der Altanwendung">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="schauanmeldung_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="schau_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_anmeldung_schau"
+                             references="schau(id)"/>
+            </column>
+            <column name="zuecher_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_anmeldung_zuecher"
+                             references="zuecher(id)"/>
+            </column>
+            <column name="vogelklasse_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_anmeldung_vogelklasse"
+                             references="vogelklasse(id)"/>
+            </column>
+            <column name="richter_id" type="BIGINT">
+                <constraints foreignKeyName="fk_anmeldung_richter"
+                             references="richter(id)"/>
+            </column>
+            <column name="kaefig_nummer" type="INTEGER"
+                    remarks="KaefigNr: fortlaufend, wird nach Löschung nicht wiederverwendet">
+                <constraints nullable="false"/>
+            </column>
+            <column name="geschlecht" type="VARCHAR(10)" defaultValue="UNBEKANNT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ring_nummer" type="VARCHAR(50)"
+                    remarks="RingNr in Altanwendung"/>
+            <column name="zuchtjahr" type="INTEGER"
+                    remarks="ZuchtJahr in Altanwendung (Altanwendung 2-stellig, hier 4-stellig)"/>
+            <column name="eingeliefert" type="BOOLEAN" defaultValueBoolean="true"
+                    remarks="false = NE (nicht eingeliefert) in Altanwendung">
+                <constraints nullable="false"/>
+            </column>
+            <!-- platzierung: BETWEEN 1 AND 10 – Altdaten enthalten Platzierungen bis 7 -->
+            <column name="platzierung" type="INTEGER"
+                    remarks="Platz 1–7 aus Altdaten (bis Platz 10 reserviert), NULL wenn nicht platziert"/>
+            <column name="platzierungskennzeichen" type="VARCHAR(20)" defaultValue="NORMAL"
+                    remarks="FkNe in Altanwendung: NORMAL / NICHT_EINGELIEFERT / FALSCHE_KLASSE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="medaille" type="VARCHAR(10)" defaultValue="KEINE"
+                    remarks="Medaille in Altanwendung: G/S/B → GOLD/SILBER/BRONZE/KEINE"/>
+            <column name="anzahl_voegel_in_klasse" type="INTEGER"
+                    remarks="AnzSkl in Altanwendung (berechnet)"/>
+            <column name="anzahl_zuecher_in_klasse" type="INTEGER"
+                    remarks="AnZue in Altanwendung (berechnet)"/>
+            <column name="klasse_zusatzbezeichnung" type="VARCHAR(200)"
+                    remarks="ZusBez in Altanwendung – für konsolidierte Klassen"/>
+            <column name="punkte_platz"                    type="DECIMAL(10,4)" remarks="PktPl in Altanwendung"/>
+            <column name="punkte_schausieger_gegner"       type="DECIMAL(10,4)" remarks="PktSchausGg in Altanwendung"/>
+            <column name="punkte_schaugruppe"              type="DECIMAL(10,4)" remarks="PktSchaGr in Altanwendung"/>
+            <column name="punkte_schaugruppe_gegner"       type="DECIMAL(10,4)" remarks="PktSchauGrGg in Altanwendung"/>
+            <column name="punkte_gruppensieger"            type="DECIMAL(10,4)" remarks="PktGruS in Altanwendung"/>
+            <column name="punkte_gruppensieger_gegner"     type="DECIMAL(10,4)" remarks="PktGrusGg in Altanwendung"/>
+            <column name="punkte_schwerpunktfarbe"         type="DECIMAL(10,4)" remarks="PktSchwF in Altanwendung"/>
+            <column name="punkte_schwerpunktfarbe_gegner"  type="DECIMAL(10,4)" remarks="PktSchwFGg in Altanwendung"/>
+            <column name="punkte_gesamt"                   type="DECIMAL(10,4)" remarks="PktGes in Altanwendung – Summe aller Punkte"/>
+            <column name="heller_gruppe" type="VARCHAR(20)" remarks="Hellgr in Altanwendung"/>
+            <column name="ch_standard"   type="VARCHAR(20)" remarks="CHSt in Altanwendung"/>
+            <column name="erstellt_am" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="geaendert_am" type="TIMESTAMP"/>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="schauanmeldung"
+                columnNames="schau_id, kaefig_nummer"
+                constraintName="uq_anmeldung_schau_kaefig"/>
+
+        <sql>ALTER TABLE schauanmeldung ADD CONSTRAINT chk_anmeldung_geschlecht
+            CHECK (geschlecht IN ('MAENNLICH','WEIBLICH','UNBEKANNT'))</sql>
+
+        <!-- platzierung: bis 10 (Altdaten haben Werte bis 7) -->
+        <sql>ALTER TABLE schauanmeldung ADD CONSTRAINT chk_anmeldung_platzierung
+            CHECK (platzierung IS NULL OR platzierung BETWEEN 1 AND 10)</sql>
+
+        <sql>ALTER TABLE schauanmeldung ADD CONSTRAINT chk_anmeldung_platzierungskennzeichen
+            CHECK (platzierungskennzeichen IN ('NORMAL','NICHT_EINGELIEFERT','FALSCHE_KLASSE'))</sql>
+
+        <sql>ALTER TABLE schauanmeldung ADD CONSTRAINT chk_anmeldung_medaille
+            CHECK (medaille IN ('GOLD','SILBER','BRONZE','KEINE'))</sql>
+
+        <createIndex tableName="schauanmeldung" indexName="idx_anmeldung_schau">
+            <column name="schau_id"/>
+        </createIndex>
+        <createIndex tableName="schauanmeldung" indexName="idx_anmeldung_zuecher">
+            <column name="zuecher_id"/>
+        </createIndex>
+        <createIndex tableName="schauanmeldung" indexName="idx_anmeldung_klasse">
+            <column name="vogelklasse_id"/>
+        </createIndex>
+        <createIndex tableName="schauanmeldung" indexName="idx_anmeldung_kaefig">
+            <column name="schau_id"/>
+            <column name="kaefig_nummer"/>
+        </createIndex>
+        <createIndex tableName="schauanmeldung" indexName="idx_anmeldung_platzierung">
+            <column name="schau_id"/>
+            <column name="platzierung"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ============================================================
+         SIEGER (entspricht [X][Jahr]Siegerliste.db)
+         ============================================================ -->
+    <changeSet id="v1-table-sieger" author="divowin">
+        <createTable tableName="sieger"
+                     remarks="Siegerliste – entspricht [X][Jahr]Siegerliste.db der Altanwendung">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="sieger_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="schau_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_sieger_schau"
+                             references="schau(id)"/>
+            </column>
+            <column name="zuecher_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_sieger_zuecher"
+                             references="zuecher(id)"/>
+            </column>
+            <column name="anmeldung_id" type="BIGINT">
+                <constraints foreignKeyName="fk_sieger_anmeldung"
+                             references="schauanmeldung(id)"/>
+            </column>
+            <column name="kategorie" type="VARCHAR(200)"
+                    remarks="z.B. Schausieger, Bundessieger, Gruppensieger Grün">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="INTEGER"/>
+            <column name="beschreibung" type="TEXT"/>
+            <column name="manuell_eingetragen" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="erstellt_am" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="geaendert_am" type="TIMESTAMP"/>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <createIndex tableName="sieger" indexName="idx_sieger_schau">
+            <column name="schau_id"/>
+        </createIndex>
+        <createIndex tableName="sieger" indexName="idx_sieger_zuecher">
+            <column name="zuecher_id"/>
+        </createIndex>
+        <createIndex tableName="sieger" indexName="idx_sieger_kategorie">
+            <column name="kategorie"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ============================================================
+         STANDGELD (entspricht [X][Jahr]Standgeld.db)
+         ============================================================ -->
+    <changeSet id="v1-table-standgeld" author="divowin">
+        <createTable tableName="standgeld"
+                     remarks="Standgeld-Abrechnung – entspricht [X][Jahr]Standgeld.db der Altanwendung">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="standgeld_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="schau_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_standgeld_schau"
+                             references="schau(id)"/>
+            </column>
+            <column name="zuecher_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_standgeld_zuecher"
+                             references="zuecher(id)"/>
+            </column>
+            <column name="anzahl_gemeldet" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_eingeliefert" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="standgeld_pro_vogel" type="DECIMAL(6,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gesamtbetrag" type="DECIMAL(10,2)" defaultValueNumeric="0.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bezahlt" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="erstellt_am" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="geaendert_am" type="TIMESTAMP"/>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="standgeld"
+                columnNames="schau_id, zuecher_id"
+                constraintName="uq_standgeld_schau_zuecher"/>
+
+        <createIndex tableName="standgeld" indexName="idx_standgeld_schau">
+            <column name="schau_id"/>
+        </createIndex>
+        <createIndex tableName="standgeld" indexName="idx_standgeld_zuecher">
+            <column name="zuecher_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ============================================================
+         ZUECHER_PLATZIERUNG (entspricht [X][Jahr]ZuePlacier.db + Medliste.DB)
+         ============================================================ -->
+    <changeSet id="v1-table-zuecher-platzierung" author="divowin">
+        <createTable tableName="zuecher_platzierung"
+                     remarks="Züchter-Gesamtauswertung – entspricht [X][Jahr]ZuePlacier.db + Medliste.DB der Altanwendung">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="zuecher_platzierung_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="schau_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_zuechpl_schau"
+                             references="schau(id)"/>
+            </column>
+            <column name="zuecher_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_zuechpl_zuecher"
+                             references="zuecher(id)"/>
+            </column>
+            <column name="rang" type="INTEGER"/>
+            <column name="zuecher_stufe" type="INTEGER"
+                    remarks="ZStufe in Medliste.DB"/>
+            <column name="medaillen_gold" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="medaillen_silber" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="medaillen_bronze" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ist_schausieger" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ist_schaugruppensieger" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ist_gruppensieger" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="punkte_gesamt" type="DECIMAL(12,4)" defaultValueNumeric="0"/>
+            <column name="anzahl_voegel_gemeldet" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_voegel_eingeliefert" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_voegel_platziert" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Felder aus ZuePlacier.DB: AnzKaefig + Anz1–Anz7 -->
+            <column name="anzahl_kaefige" type="INTEGER" defaultValueNumeric="0"
+                    remarks="AnzKaefig in Altanwendung – Gesamtanzahl angemeldeter Käfige">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_1" type="INTEGER" defaultValueNumeric="0"
+                    remarks="Anz1 in Altanwendung – Anzahl Vögel mit Platz 1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_2" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_3" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_4" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_5" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_6" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anzahl_platz_7" type="INTEGER" defaultValueNumeric="0"
+                    remarks="Anz7 in Altanwendung – Anzahl Vögel mit Platz 7">
+                <constraints nullable="false"/>
+            </column>
+            <column name="erstellt_am" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="geaendert_am" type="TIMESTAMP"/>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+
+        <addUniqueConstraint
+                tableName="zuecher_platzierung"
+                columnNames="schau_id, zuecher_id"
+                constraintName="uq_zuecher_platzierung"/>
+
+        <createIndex tableName="zuecher_platzierung" indexName="idx_zuechpl_schau">
+            <column name="schau_id"/>
+        </createIndex>
+        <createIndex tableName="zuecher_platzierung" indexName="idx_zuechpl_zuecher">
+            <column name="zuecher_id"/>
+        </createIndex>
+        <createIndex tableName="zuecher_platzierung" indexName="idx_zuechpl_rang">
+            <column name="schau_id"/>
+            <column name="rang"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ============================================================
+         Views
+         ============================================================ -->
+    <changeSet id="v1-views" author="divowin">
+
+        <createView viewName="v_schaukatalog"
+                    remarks="Schaukatalog-View – Basis für Katalog-Druckausgabe"
+                    replaceIfExists="true">
+            SELECT
+            s.id AS schau_id,
+            s.schautyp,
+            s.jahr,
+            s.ort,
+            sa.kaefig_nummer,
+            vk.skl1, vk.skl2, vk.skl3,
+            vk.farbe1, vk.farbe2,
+            sa.geschlecht,
+            sa.ring_nummer,
+            sa.zuchtjahr,
+            z.nachname AS zuecher_nachname,
+            z.vorname  AS zuecher_vorname,
+            z.verbandsnummer,
+            z.verband,
+            z.wohnort,
+            z.land,
+            z.katalog_einverstaendnis,
+            sa.platzierung,
+            sa.medaille,
+            sa.platzierungskennzeichen,
+            sa.punkte_gesamt
+            FROM schauanmeldung sa
+            JOIN schau       s  ON s.id  = sa.schau_id
+            JOIN zuecher     z  ON z.id  = sa.zuecher_id
+            JOIN vogelklasse vk ON vk.id = sa.vogelklasse_id
+            ORDER BY vk.skl1, vk.skl2, vk.skl3, sa.kaefig_nummer
+        </createView>
+
+        <createView viewName="v_medaillenuebersicht"
+                    remarks="Medaillenauswertung – Basis für Urkunden und Medaillenliste"
+                    replaceIfExists="true">
+            SELECT
+            zp.schau_id,
+            s.schautyp,
+            s.jahr,
+            z.nachname,
+            z.vorname,
+            z.verbandsnummer,
+            z.verband,
+            zp.rang,
+            zp.medaillen_gold,
+            zp.medaillen_silber,
+            zp.medaillen_bronze,
+            zp.medaillen_gold + zp.medaillen_silber + zp.medaillen_bronze AS medaillen_gesamt,
+            zp.punkte_gesamt,
+            zp.ist_schausieger,
+            zp.ist_schaugruppensieger,
+            zp.ist_gruppensieger
+            FROM zuecher_platzierung zp
+            JOIN schau   s ON s.id = zp.schau_id
+            JOIN zuecher z ON z.id = zp.zuecher_id
+            ORDER BY zp.schau_id, zp.rang NULLS LAST, zp.punkte_gesamt DESC
+        </createView>
+
+        <createView viewName="v_standgeld_abrechnung"
+                    remarks="Standgeld-Abrechnung – entspricht Standgeld-Druckfunktion der Altanwendung"
+                    replaceIfExists="true">
+            SELECT
+            sg.schau_id,
+            s.schautyp,
+            s.jahr,
+            s.ort,
+            z.nachname,
+            z.vorname,
+            z.verbandsnummer,
+            sg.anzahl_gemeldet,
+            sg.anzahl_eingeliefert,
+            sg.standgeld_pro_vogel,
+            sg.gesamtbetrag,
+            sg.bezahlt
+            FROM standgeld sg
+            JOIN schau   s ON s.id = sg.schau_id
+            JOIN zuecher z ON z.id = sg.zuecher_id
+            ORDER BY sg.schau_id, z.nachname, z.vorname
+        </createView>
+
+    </changeSet>
+
+</databaseChangeLog>

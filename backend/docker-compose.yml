@@ -1,0 +1,37 @@
+services:
+
+  db:
+    image: postgres:15
+    container_name: divowin-db
+    environment:
+      POSTGRES_DB: divowin
+      POSTGRES_USER: divowin
+      POSTGRES_PASSWORD: divowin
+    volumes:
+      - db-daten:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U divowin"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: divowin-app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/divowin
+      SPRING_DATASOURCE_USERNAME: divowin
+      SPRING_DATASOURCE_PASSWORD: divowin
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db-daten:
