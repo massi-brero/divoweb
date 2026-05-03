@@ -42,6 +42,8 @@
       <div class="topbar__accent"></div>
     </header>
 
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
     <main class="page">
       <section class="page-section">
         <h1 class="page-title">Schau anlegen</h1>
@@ -145,7 +147,7 @@
             <button
               id="startManagementButton"
               class="btn btn--secondary"
-              type="button"
+              type="submit"
             >
               Schauverwaltung starten
             </button>
@@ -197,6 +199,6 @@
       </article>
     </template>
 
-    <script src="./app.js"></script>
+    <script type="module" src="./app.js"></script>
   </body>
 </html>
