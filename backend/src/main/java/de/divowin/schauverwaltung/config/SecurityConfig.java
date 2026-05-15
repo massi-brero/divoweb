@@ -50,9 +50,10 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of("https://frontend-lsv0.onrender.com"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(false); // explizit setzen
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", config);
+        source.registerCorsConfiguration("/**", config); // /** statt /api/**
         return source;
     }
 }
