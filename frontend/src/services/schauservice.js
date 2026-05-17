@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8080/api/v1";
+import { request } from './apiClient.js'
 
 /**
  * @typedef {Object} SchauAnlegenRequest
@@ -14,24 +14,15 @@ const API_BASE_URL = "http://localhost:8080/api/v1";
  * Legt eine neue Schau im Backend an.
  *
  * @param {SchauAnlegenRequest} schau
- * @returns {Promise<Object>}
+ * @returns {Promise<object>}
  */
-export async function schauAnlegen(schau) {
-  const response = await fetch(`${API_BASE_URL}/schauen`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+export function schauAnlegen(schau) {
+  return request('/schauen', {
+    method: 'POST',
     body: JSON.stringify(schau),
-  });
+  })
+}
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      errorText ||
-        `Die Schau konnte nicht gespeichert werden. Status: ${response.status}`,
-    );
-  }
-
-  return response.json();
+export function getSchauen() {
+  return request('/schauen')
 }
