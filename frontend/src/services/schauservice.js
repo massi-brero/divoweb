@@ -1,4 +1,4 @@
-import { request } from "./apiClient.js";
+import { request } from './apiClient.js'
 
 /**
  * @typedef {Object} SchauAnlegenRequest
@@ -17,12 +17,12 @@ import { request } from "./apiClient.js";
  * @returns {Promise<object>}
  */
 export function schauAnlegen(schau) {
-  return request("/schauen", {
-    method: "POST",
+  return request('/schauen', {
+    method: 'POST',
     body: JSON.stringify(schau),
-  });
+  })
 }
 
 export function getSchauen() {
-  return request("/schauen");
+  return request('/schauen')
 }

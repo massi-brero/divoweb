@@ -382,11 +382,6 @@ select {
   background: rgba(95, 166, 50, 0.26);
 }
 
-#determineColorButton {
-  padding: 0;
-  width: 11.25rem;
-}
-
 .plus {
   margin-right: 8px;
   font-size: 20px;
@@ -464,10 +459,7 @@ select {
   font-weight: 600;
   box-shadow: var(--shadow);
   backdrop-filter: blur(2px);
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    background 0.18s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 
 .home-action:hover {
@@ -627,9 +619,7 @@ select {
   box-shadow: 0 12px 24px rgba(25, 28, 21, 0.18);
   opacity: 0;
   transform: translateY(12px);
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .toast--visible {
@@ -737,7 +727,8 @@ select {
 }
 
 .nav-dropdown:hover .nav-dropdown__menu,
-.nav-dropdown:focus-within .nav-dropdown__menu {
+.nav-dropdown:focus-within .nav-dropdown__menu,
+.nav-dropdown.is-open .nav-dropdown__menu {
   display: block;
 }
 
