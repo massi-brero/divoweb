@@ -25,12 +25,19 @@
           </button>
           <div class="nav-dropdown__menu">
             <a class="nav-dropdown__item" href="zuechter-voegel.html">Züchter & Vögel anlegen</a>
+            <a class="nav-dropdown__item" href="aussteller-uebersicht.html">Übersicht je Aussteller</a>
           </div>
         </div>
         <a class="nav-link" href="#">Showtime</a>
         <a class="nav-link" href="#">Nach der Schau</a>
         <a class="nav-link nav-link--home" href="../index.html" aria-label="Zur Startseite">
-          <span class="home-icon">⌂</span>
+          <span class="home-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+              <path d="M3 10.5 12 3l9 7.5" />
+              <path d="M6.5 9.5V20h11V9.5" />
+              <path d="M10 20v-5.5h4V20" />
+            </svg>
+          </span>
         </a>
       </nav>
     </div>
@@ -41,7 +48,7 @@
     <h1 class="page-title">Schau anlegen</h1>
 
     <section class="panel">
-      <form id="showForm" novalidate>
+      <form id="showForm" class="show-form--dense" novalidate>
         <div class="panel__grid">
           <div>
             <h2 class="section-title">Schaudaten</h2>

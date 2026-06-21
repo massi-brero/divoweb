@@ -116,18 +116,33 @@ select {
 }
 
 .nav-link--home {
-  background: rgba(95, 166, 50, 0.08);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   margin-left: 8px;
-  padding: 14px 16px;
-  font-size: 18px;
+  padding: 10px 14px;
 }
 
 .nav-link--home:hover {
-  background: rgba(95, 166, 50, 0.18);
+  background: rgba(95, 166, 50, 0.08);
 }
 
 .home-icon {
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+}
+
+.home-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: var(--green-dark);
+  stroke-width: 2.1;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .page {
@@ -153,7 +168,7 @@ select {
 .panel__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  gap: 22px;
 }
 
 .panel__footer {
@@ -186,7 +201,7 @@ select {
 }
 
 .form-group {
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 
 .form-group--compact {
@@ -770,6 +785,24 @@ select {
   margin-bottom: 14px;
 }
 
+.search-row--equal {
+  grid-template-columns: repeat(3, 220px);
+  justify-content: start;
+}
+
+.search-row--equal .btn {
+  width: 220px;
+}
+
+.search-row--birds-overview {
+  grid-template-columns: 120px 140px 220px 180px 180px;
+  justify-content: start;
+}
+
+.search-row--birds-overview .btn {
+  width: 180px;
+}
+
 .compact-form-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -801,7 +834,151 @@ select {
 
 .form-group--button-line .btn {
   width: auto;
-  min-width: 160px;
+  min-width: 0;
+}
+
+.bird-color-button {
+  width: 180px !important;
+}
+
+.placing-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 90px;
+  min-height: 38px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1.5px solid #c7d883;
+  background: linear-gradient(180deg, #fffef9, #eef4d0);
+  color: var(--green-dark);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+}
+
+.placing-badge__laurel {
+  width: 18px;
+  height: 22px;
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: 0 0 auto;
+}
+
+.placing-badge__laurel--right {
+  transform: scaleX(-1);
+}
+
+.placing-badge__number {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1.5px solid rgba(95, 166, 50, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.medal-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 110px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  border: 1.5px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+}
+
+.medal-badge__icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.medal-badge__icon::before,
+.medal-badge__icon::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  width: 5px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.medal-badge__icon::before {
+  left: 3px;
+  transform: rotate(-8deg);
+}
+
+.medal-badge__icon::after {
+  right: 3px;
+  transform: rotate(8deg);
+}
+
+.medal-badge--gold {
+  background: linear-gradient(180deg, #fff8d2, #ffe8a3);
+  border-color: #e6c44a;
+  color: #8c6b05;
+}
+
+.medal-badge--gold .medal-badge__icon {
+  background: radial-gradient(circle at 30% 30%, #fff9e0, #e3b521 70%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.medal-badge--gold .medal-badge__icon::before,
+.medal-badge--gold .medal-badge__icon::after {
+  background: #ce8c1d;
+}
+
+.medal-badge--silver {
+  background: linear-gradient(180deg, #f5f8fa, #dfe6ec);
+  border-color: #b9c4cd;
+  color: #53616d;
+}
+
+.medal-badge--silver .medal-badge__icon {
+  background: radial-gradient(circle at 30% 30%, #ffffff, #aab5bf 72%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+}
+
+.medal-badge--silver .medal-badge__icon::before,
+.medal-badge--silver .medal-badge__icon::after {
+  background: #8ea0ad;
+}
+
+.medal-badge--bronze {
+  background: linear-gradient(180deg, #f7e4d6, #ebc29f);
+  border-color: #c98b61;
+  color: #8b522d;
+}
+
+.medal-badge--bronze .medal-badge__icon {
+  background: radial-gradient(circle at 30% 30%, #f8e8df, #b87446 72%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.medal-badge--bronze .medal-badge__icon::before,
+.medal-badge--bronze .medal-badge__icon::after {
+  background: #9f5f39;
+}
+
+.medal-badge--plain {
+  background: #f5f5f5;
+  border-color: #d8d8d8;
+  color: #6d7a67;
 }
 
 .panel__footer--compact {
@@ -895,7 +1072,108 @@ select {
     grid-template-columns: 1fr;
   }
 
-  .search-row--compact {
+  .search-row--compact,
+  .search-row--equal,
+  .search-row--birds-overview {
     grid-template-columns: 1fr;
   }
+
+  .search-row--equal .btn,
+  .search-row--birds-overview .btn,
+  .bird-color-button {
+    width: 100% !important;
+  }
+}
+
+/* Einheitliche vertikale Formularabstände wie bei „Vögel aufnehmen“ */
+.show-form--dense .form-group,
+.compact-form-grid .form-group {
+  margin-bottom: 0;
+}
+
+.show-form--dense .form-group label,
+.compact-form-grid .form-group label {
+  margin-bottom: 6px;
+}
+
+.show-form--dense .panel__grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.show-form--dense .field-error,
+.compact-form-grid .field-error {
+  min-height: 0;
+  margin: 3px 0 0;
+}
+
+.medal-badge,
+.medal-count-badge {
+  position: relative;
+  top: -2px;
+  vertical-align: middle;
+}
+
+.medal-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 64px;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  font-weight: 800;
+}
+
+.medal-count-badge .medal-badge__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.medal-count-badge--gold {
+  background: linear-gradient(180deg, #fff8d2, #ffe8a3);
+  border-color: #e6c44a;
+  color: #8c6b05;
+}
+
+.medal-count-badge--gold .medal-badge__icon {
+  background: radial-gradient(circle at 30% 30%, #fff9e0, #e3b521 70%);
+}
+
+.medal-count-badge--gold .medal-badge__icon::before,
+.medal-count-badge--gold .medal-badge__icon::after {
+  background: #ce8c1d;
+}
+
+.medal-count-badge--silver {
+  background: linear-gradient(180deg, #f5f8fa, #dfe6ec);
+  border-color: #b9c4cd;
+  color: #53616d;
+}
+
+.medal-count-badge--silver .medal-badge__icon {
+  background: radial-gradient(circle at 30% 30%, #fff, #aab5bf 72%);
+}
+
+.medal-count-badge--silver .medal-badge__icon::before,
+.medal-count-badge--silver .medal-badge__icon::after {
+  background: #8ea0ad;
+}
+
+.medal-count-badge--bronze {
+  background: linear-gradient(180deg, #f7e4d6, #ebc29f);
+  border-color: #c98b61;
+  color: #8b522d;
+}
+
+.medal-count-badge--bronze .medal-badge__icon {
+  background: radial-gradient(circle at 30% 30%, #f8e8df, #b87446 72%);
+}
+
+.medal-count-badge--bronze .medal-badge__icon::before,
+.medal-count-badge--bronze .medal-badge__icon::after {
+  background: #9f5f39;
 }

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DivoWeb – Übersicht je Aussteller</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg" />
+  <link rel="stylesheet" href="../styles/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="../index.html" aria-label="DivoWeb Startseite">
+        <img class="brand__logo" src="../assets/images/vogel.png" alt="Wellensittich Logo" />
+        <div class="brand__text">
+          <span class="brand__divo">Divo</span><span class="brand__web">Web</span>
+        </div>
+      </a>
+
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a class="nav-link" href="schau-anlegen.html">Schau anlegen</a>
+        <div class="nav-dropdown">
+          <button class="nav-link nav-dropdown__button is-active" type="button" aria-haspopup="true">
+            Vor der Schau
+          </button>
+          <div class="nav-dropdown__menu">
+            <a class="nav-dropdown__item" href="zuechter-voegel.html">Züchter & Vögel anlegen</a>
+            <a class="nav-dropdown__item is-active" href="aussteller-uebersicht.html">Übersicht je Aussteller</a>
+          </div>
+        </div>
+        <a class="nav-link" href="#">Showtime</a>
+        <a class="nav-link" href="#">Nach der Schau</a>
+        <a class="nav-link nav-link--home" href="../index.html" aria-label="Zur Startseite">
+          <span class="home-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+              <path d="M3 10.5 12 3l9 7.5" />
+              <path d="M6.5 9.5V20h11V9.5" />
+              <path d="M10 20v-5.5h4V20" />
+            </svg>
+          </span>
+        </a>
+      </nav>
+    </div>
+    <div class="topbar__accent"></div>
+  </header>
+
+  <main class="page page--compact">
+    <h1 class="page-title">Übersicht je Aussteller</h1>
+
+    <section class="panel panel--compact">
+      <div class="tabs tabs--compact" role="tablist" aria-label="Ausstellerübersichten">
+        <button class="tab-button is-active" type="button" data-tab-target="ergebnisTab">
+          Aussteller-Ergebnisübersicht
+        </button>
+        <button class="tab-button" type="button" data-tab-target="voegelTab">
+          Vögel je Aussteller
+        </button>
+      </div>
+
+      <section id="ergebnisTab" class="tab-panel is-active">
+        <div class="search-row search-row--compact search-row--equal">
+          <div class="form-group form-group--compact">
+            <label for="schauIdErgebnis">Schau-ID</label>
+            <input id="schauIdErgebnis" type="number" min="1" value="1" />
+          </div>
+          <button id="loadResultsButton" class="btn btn--primary" type="button">Übersicht laden</button>
+          <button id="sampleResultsButton" class="btn btn--secondary" type="button">Testdaten anzeigen</button>
+        </div>
+
+        <h3 class="section-title section-title--compact section-title--table">Ergebnisse der Aussteller</h3>
+        <div class="table-wrap">
+          <table class="data-table data-table--compact">
+            <thead>
+              <tr>
+                <th>Verbandsnummer</th>
+                <th>Aussteller</th>
+                <th>Verband</th>
+                <th>Plätze</th>
+                <th>Gold</th>
+                <th>Silber</th>
+                <th>Bronze</th>
+                <th>Punkte</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody">
+              <tr><td colspan="8">Noch keine Daten geladen.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="voegelTab" class="tab-panel">
+        <div class="search-row search-row--compact search-row--birds-overview">
+          <div class="form-group form-group--compact">
+            <label for="schauIdBirds">Schau-ID</label>
+            <input id="schauIdBirds" type="number" min="1" value="1" />
+          </div>
+          <div class="form-group form-group--compact">
+            <label for="verband">Verband / Sparte</label>
+            <select id="verband">
+              <option value="AZ">AZ</option>
+              <option value="DKB">DKB</option>
+              <option value="AGZ">AGZ</option>
+              <option value="DWV">DWV</option>
+            </select>
+          </div>
+          <div class="form-group form-group--compact">
+            <label for="verbandsnummer">Verbandsnummer</label>
+            <input id="verbandsnummer" autocomplete="off" />
+          </div>
+          <button id="loadBirdsButton" class="btn btn--primary" type="button">Vögel laden</button>
+          <button id="sampleBirdsButton" class="btn btn--secondary" type="button">Testdaten anzeigen</button>
+        </div>
+
+        <div id="breederSummary" class="selected-breeder-box selected-breeder-box--compact" hidden></div>
+
+        <h3 class="section-title section-title--compact section-title--table">Vögel des Ausstellers</h3>
+        <div class="table-wrap">
+          <table class="data-table data-table--compact">
+            <thead>
+              <tr>
+                <th>Käfig-Nr.</th>
+                <th>Schauklasse</th>
+                <th>Farbe</th>
+                <th>Geschlecht</th>
+                <th>Platzierung</th>
+                <th>Medaille</th>
+                <th>Punkte</th>
+              </tr>
+            </thead>
+            <tbody id="birdsTableBody">
+              <tr><td colspan="7">Noch keine Daten geladen.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toastContainer" class="toast-container"></div>
+  <script type="module" src="../scripts/aussteller-uebersicht.js"></script>
+  <script type="module" src="../scripts/navigation.js"></script>
+</body>
+</html>
