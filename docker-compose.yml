@@ -1,0 +1,52 @@
+# Wellensittich / DivoWin – Homeserver-Deployment
+# Start: docker compose up -d --build
+services:
+
+  db:
+    image: postgres:16
+    container_name: divowin-db
+    environment:
+      POSTGRES_DB: divowin
+      POSTGRES_USER: divowin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-divowin}
+    volumes:
+      - db-daten:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U divowin"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    # Kein ports-Mapping: Die DB muss nur intern erreichbar sein.
+    # Für Zugriff per DB-Tool bei Bedarf einkommentieren:
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+
+  backend:
+    build: ./backend
+    container_name: divowin-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/divowin
+      SPRING_DATASOURCE_USERNAME: divowin
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-divowin}
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    # Kein ports-Mapping: Zugriff läuft über nginx (Service "frontend").
+
+  frontend:
+    image: nginx:1.27-alpine
+    container_name: divowin-frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend/src:/usr/share/nginx/html:ro
+      - ./frontend/docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  db-daten:

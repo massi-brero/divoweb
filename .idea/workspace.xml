@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a0c8b482-fb47-4903-b0d8-b54c5124202f" name="Changes" comment="" />
+    <list default="true" id="a0c8b482-fb47-4903-b0d8-b54c5124202f" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application-render.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/services/apiClient.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/apiClient.js" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -13,6 +17,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "jmba"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/jmba/wellensittich.git",
+    "accountId": "e48b0dea-c9a0-4c54-8349-4b4c5340eb49"
+  }
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 8
 }</component>
@@ -80,6 +96,7 @@
       <workItem from="1772438754837" duration="1005000" />
       <workItem from="1773615358950" duration="355000" />
       <workItem from="1773615732676" duration="376000" />
+      <workItem from="1783801347547" duration="166000" />
     </task>
     <servers />
   </component>

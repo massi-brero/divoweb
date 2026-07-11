@@ -1,0 +1,10 @@
+[Unit]
+Description=Wellensittich Auto-Deploy Timer (prüft jede Minute auf neue Commits)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+Unit=wellensittich-deploy.service
+
+[Install]
+WantedBy=timers.target
