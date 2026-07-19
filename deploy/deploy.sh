@@ -11,7 +11,7 @@ set -euo pipefail
 #   (.env mit DB_PASSWORD in /opt/wellensittich/repo anlegen!)
 # Alternativ den bestehenden Checkout verwenden:
 #   REPO_DIR="/home/jonet/git/wellensittich"
-REPO_DIR="~/git/wellensittich"
+REPO_DIR="/home/jonet/git/wellensittich"
 BRANCH="main"
 LOCKFILE="/tmp/wellensittich-deploy.lock"
 

@@ -6,5 +6,5 @@ After=docker.service network-online.target
 [Service]
 Type=oneshot
 User=jonet
-ExecStart=~/git/wellensittich/deploy/deploy.sh
-WorkingDirectory=~/git/wellensittich
+ExecStart=/home/jonet/wellensittich/deploy/deploy.sh
+WorkingDirectory=/home/jonet/git/wellensittich
