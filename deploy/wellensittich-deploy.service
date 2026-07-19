@@ -5,8 +5,6 @@ After=docker.service network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/opt/wellensittich/deploy.sh
-WorkingDirectory=/opt/wellensittich/repo
-# Falls das Deployment nicht als root laufen soll, hier einen User eintragen,
-# der Mitglied der Gruppe "docker" ist:
-# User=deploy
+User=jonet
+ExecStart=~/git/wellensittich/deploy/deploy.sh
+WorkingDirectory=~/git/wellensittich

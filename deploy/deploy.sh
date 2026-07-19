@@ -1,11 +1,17 @@
 #!/bin/bash
 # Auto-Deploy für die Wellensittich-App.
 # Prüft, ob es auf origin/main neue Commits gibt, und baut die Container bei Bedarf neu.
-# Wird per systemd-Timer (oder Cron) regelmäßig aufgerufen.
+# Wird per systemd-Timer jede Minute als Benutzer "jonet" aufgerufen.
 
 set -euo pipefail
 
-REPO_DIR="/opt/wellensittich/repo"
+# Separater Deploy-Checkout (empfohlen). Einmalig anlegen mit:
+#   sudo mkdir -p /opt/wellensittich && sudo chown jonet:jonet /opt/wellensittich
+#   git clone git@github.com:jmba/wellensittich.git /opt/wellensittich/repo
+#   (.env mit DB_PASSWORD in /opt/wellensittich/repo anlegen!)
+# Alternativ den bestehenden Checkout verwenden:
+#   REPO_DIR="/home/jonet/git/wellensittich"
+REPO_DIR="~/git/wellensittich"
 BRANCH="main"
 LOCKFILE="/tmp/wellensittich-deploy.lock"
 
@@ -25,6 +31,7 @@ if [ "$LOCAL" = "$REMOTE" ]; then
 fi
 
 echo "$(date '+%F %T') Neuer Commit gefunden: $LOCAL -> $REMOTE"
+# Achtung: verwirft lokale Änderungen im Deploy-Checkout!
 git reset --hard "origin/$BRANCH"
 
 docker compose up -d --build
