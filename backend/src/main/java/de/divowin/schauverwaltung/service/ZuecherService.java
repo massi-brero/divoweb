@@ -3,6 +3,7 @@ package de.divowin.schauverwaltung.service;
 import de.divowin.schauverwaltung.dto.ZuecherRequestDTO;
 import de.divowin.schauverwaltung.dto.ZuecherResponseDTO;
 import de.divowin.schauverwaltung.entity.Zuecher;
+import de.divowin.schauverwaltung.enums.Verband;
 import de.divowin.schauverwaltung.repository.ZuecherRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,24 @@ public class ZuecherService {
         return zuecherRepository
                 .findByNachnameContainingIgnoreCaseOrderByNachnameAsc(nachname)
                 .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    /**
+     * Sucht Züchter anhand der Verbandsnummer.
+     * Ist {@code verband} angegeben, wird zusätzlich darauf eingeschränkt
+     * (für den Fall, dass Verbandsnummern nicht systemweit eindeutig sind).
+     */
+    @Transactional(readOnly = true)
+    public List<ZuecherResponseDTO> sucheNachVerbandsnummer(String verbandsnummer, Verband verband) {
+        List<Zuecher> treffer = (verband != null)
+                ? zuecherRepository.findByVerbandsnummerAndVerband(verbandsnummer, verband)
+                        .map(List::of)
+                        .orElse(List.of())
+                : zuecherRepository.findByVerbandsnummer(verbandsnummer);
+
+        return treffer.stream()
                 .map(this::toResponse)
                 .toList();
     }

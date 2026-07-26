@@ -2,6 +2,7 @@ package de.divowin.schauverwaltung.controller;
 
 import de.divowin.schauverwaltung.dto.ZuecherRequestDTO;
 import de.divowin.schauverwaltung.dto.ZuecherResponseDTO;
+import de.divowin.schauverwaltung.enums.Verband;
 import de.divowin.schauverwaltung.service.ZuecherService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,6 +37,17 @@ public class ZuecherController {
     @Operation(summary = "Züchter nach Nachname suchen")
     public List<ZuecherResponseDTO> suche(@RequestParam String name) {
         return zuecherService.sucheNachNachname(name);
+    }
+
+    @GetMapping("/verband/{verbandsnummer}")
+    @Operation(summary = "Züchter nach Verbandsnummer suchen (optional eingeschränkt auf einen Verband)")
+    public List<ZuecherResponseDTO> sucheNachVerbandsnummer(
+            @PathVariable String verbandsnummer,
+            @RequestParam(required = false) String verband) {
+        Verband verbandEnum = (verband != null && !verband.isBlank())
+                ? Verband.vonKuerzel(verband)
+                : null;
+        return zuecherService.sucheNachVerbandsnummer(verbandsnummer, verbandEnum);
     }
 
     @PostMapping

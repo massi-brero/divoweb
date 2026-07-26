@@ -15,6 +15,9 @@ public interface ZuecherRepository extends JpaRepository<Zuecher, Long> {
 
     Optional<Zuecher> findByVerbandsnummerAndVerband(String verbandsnummer, Verband verband);
 
+    /** Suche nur nach Verbandsnummer, ohne Einschränkung auf einen Verband. */
+    List<Zuecher> findByVerbandsnummer(String verbandsnummer);
+
     List<Zuecher> findByNachnameContainingIgnoreCaseOrderByNachnameAsc(String nachname);
 
     List<Zuecher> findByVerbandOrderByNachnameAscVornameAsc(Verband verband);
