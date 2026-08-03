@@ -1,29 +1,59 @@
-// Im Deployment läuft das Frontend hinter nginx, das /api an das Backend weiterleitet.
-// Daher genügt ein relativer Pfad. Nur wenn die Seite direkt vom Dateisystem oder einem
-// separaten Dev-Server geöffnet wird, fällt der Client auf localhost:8080 zurück.
-const servedByWebserver = window.location.protocol.startsWith('http') && window.location.port !== '63342'
-
-export const API_BASE_URL = servedByWebserver
-  ? '/api/v1'
-  : 'http://localhost:8080/api/v1'
+export const API_BASE_URL = "http://localhost:8080/api/v1";
 
 export async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers ?? {}),
-    },
-    ...options,
-  })
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers ?? {}),
+      },
+      ...options,
+    });
+  } catch {
+    throw new Error(
+      "Das Backend ist momentan nicht erreichbar. Bitte prüfen Sie, ob der Server läuft.",
+    );
+  }
 
   if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(errorText || `Request fehlgeschlagen. Status: ${response.status}`)
+    throw await createApiError(response);
   }
 
   if (response.status === 204) {
-    return null
+    return null;
   }
 
-  return response.json()
+  return response.json();
+}
+
+async function createApiError(response) {
+  let detail;
+
+  try {
+    const problem = await response.json();
+    detail = problem.detail || problem.message || problem.title;
+  } catch {
+    detail = await response.text();
+  }
+
+  return new Error(detail || getDefaultErrorMessage(response.status));
+}
+
+function getDefaultErrorMessage(status) {
+  switch (status) {
+    case 400:
+      return "Die eingegebenen Daten sind ungültig.";
+    case 404:
+      return "Der angeforderte Datensatz wurde nicht gefunden.";
+    case 409:
+      return "Die Daten konnten wegen eines Konflikts nicht gespeichert werden.";
+    case 422:
+      return "Bitte prüfen Sie die eingegebenen Daten.";
+    case 500:
+      return "Im Backend ist ein unerwarteter Fehler aufgetreten.";
+    default:
+      return `Die Anfrage ist fehlgeschlagen. Status: ${status}`;
+  }
 }

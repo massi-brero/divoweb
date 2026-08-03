@@ -1,11 +1,17 @@
-export async function lookupVogelklasseMock(skl1, skl2, skl3) {
-  // TODO Backend-Endpunkt ergänzen, z. B.:
-  // GET /v1/vogelklassen/lookup?skl1=15&skl2=5&skl3=1
-  const schluessel = [skl1, skl2, skl3].filter(Boolean).join('/')
+import { request } from "./apiClient.js";
 
-  return {
-    id: null,
-    schluessel,
-    farbbezeichnung: `Mock-Farbe für ${schluessel}`,
+export async function lookupVogelklasse(skl1, skl2, skl3) {
+  const params = new URLSearchParams({
+    skl1: skl1.trim(),
+  });
+
+  if (skl2?.trim()) {
+    params.set("skl2", skl2.trim());
   }
+
+  if (skl3?.trim()) {
+    params.set("skl3", skl3.trim());
+  }
+
+  return request(`/vogelklassen/lookup?${params}`);
 }
