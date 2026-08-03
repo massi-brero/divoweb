@@ -379,9 +379,9 @@ function createSampleBreederData() {
 function createSampleBirdData() {
   document.getElementById("nextCageNumber").value = "4";
   document.getElementById("geschlecht").value = "MAENNLICH";
-  document.getElementById("skl1").value = "510";
-  document.getElementById("skl2").value = "001";
-  document.getElementById("skl3").value = "10";
+  document.getElementById("skl1").value = "10   ";
+  document.getElementById("skl2").value = "10";
+  document.getElementById("skl3").value = "";
   document.getElementById("vogelklasseId").value = "";
   document.getElementById("farbbezeichnung").value = "";
   document.getElementById("ringNummer").value = "AZ 1234 001";
@@ -391,7 +391,7 @@ function createSampleBirdData() {
     {
       kaefigNummer: 1,
       geschlecht: "MAENNLICH",
-      klassenschluessel: "15/5/1",
+      klassenschluessel: "25/1/-",
       farbbezeichnung: "Beispieldaten – nicht gespeichert",
       ringNummer: "AZ 1234 001",
       zuchtjahr: new Date().getFullYear() - 1,
@@ -399,7 +399,7 @@ function createSampleBirdData() {
     {
       kaefigNummer: 2,
       geschlecht: "MAENNLICH",
-      klassenschluessel: "15/5/2",
+      klassenschluessel: "15/5/-",
       farbbezeichnung: "Beispieldaten – nicht gespeichert",
       ringNummer: "AZ 1234 002",
       zuchtjahr: new Date().getFullYear() - 1,
@@ -407,7 +407,7 @@ function createSampleBirdData() {
     {
       kaefigNummer: 3,
       geschlecht: "MAENNLICH",
-      klassenschluessel: "11/3/1",
+      klassenschluessel: "11/3/-",
       farbbezeichnung: "Beispieldaten – nicht gespeichert",
       ringNummer: "AZ 1234 003",
       zuchtjahr: new Date().getFullYear(),
