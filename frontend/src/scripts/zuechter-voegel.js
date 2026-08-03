@@ -379,8 +379,8 @@ function createSampleBreederData() {
 function createSampleBirdData() {
   document.getElementById("nextCageNumber").value = "4";
   document.getElementById("geschlecht").value = "MAENNLICH";
-  document.getElementById("skl1").value = "10   ";
-  document.getElementById("skl2").value = "10";
+  document.getElementById("skl1").value = "15";
+  document.getElementById("skl2").value = "2";
   document.getElementById("skl3").value = "";
   document.getElementById("vogelklasseId").value = "";
   document.getElementById("farbbezeichnung").value = "";
