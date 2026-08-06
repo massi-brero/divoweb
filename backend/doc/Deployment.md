@@ -7,12 +7,12 @@
 
 ## 🚀 Starten & Stoppen
 
-| Befehl | Wann |
-|---|---|
+| Befehl                         | Wann                                    |
+| ------------------------------ | --------------------------------------- |
 | `docker compose up -d --build` | **Erststart** oder nach Code-Änderungen |
-| `docker compose up -d` | Starten ohne neu zu bauen |
-| `docker compose down` | Stoppen |
-| `docker compose restart` | Neu starten ohne neu zu bauen |
+| `docker compose up -d`         | Starten ohne neu zu bauen               |
+| `docker compose down`          | Stoppen                                 |
+| `docker compose restart`       | Neu starten ohne neu zu bauen           |
 
 ---
 
@@ -44,7 +44,7 @@ docker stats                    # CPU / RAM Verbrauch live
 
 ---
 
-## 🗄 Datenbank
+## 🗄 Die Datenbank
 
 ```bash
 # Backup erstellen
